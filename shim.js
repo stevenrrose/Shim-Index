@@ -14,6 +14,35 @@ var shimAngle = 2*Math.asin(0.5/shimRatio);
 var negativeSpace = 6;
 
 /**
+ * Linear congruential generator x_n+1 = (a.x_n + c) mod m.
+ *
+ * Used to generate a non-repeating sequence of m=2x^y integers starting at 0.
+ *
+ *  @param v    Previous value.
+ *  @param x    Number of shims per shim unit.
+ *  @param y    Number of shim units/slots per piece.
+ *
+ *  @return serial number.
+ */
+function lcg(v, x, y) {
+    // Number of desired permutations.
+    var m = 2*Math.pow(x, y);
+    
+    // LCG will have a full period if and only if:
+    // 1. c and m are relatively prime
+    // 2. a-1 is divisible by all prime factors of m
+    // 3. a-1 is a multiple of 4 if m is a multiple of 4
+    //
+    // As m=2x^Y, prime factors of m are 2 and x, if x is prime, or x's prime
+    // factors otherwise.
+    // m is multiple of 4 if and only if x is multiple of 2.
+    
+    var c = 982451653;        // Large prime. As x is much smaller, this guarantees #1
+    var a = 2*x*122949823+1;  // This guarantees #2 and #3.
+    return (a*v+c) % m;
+}
+
+/**
  * Generate a random shim permutation.
  *
  *  @param x    Number of shims per shim unit.
@@ -21,15 +50,14 @@ var negativeSpace = 6;
  *
  *  @return serial number.
  */
-function generatePermutation(x, y) {
-    var max = Math.pow(x, y);
-    
-    // Generate random value in [0, 2*max).
-    // @TODO use non-repeating pseudo-random generator?
-    var r = Math.floor(Math.random(i) * 2 * max);
+function generatePermutation(index, seed, x, y) {
+    // Generate pseudorandom value in [0, 2*max) by calling LCG with sequence
+    // number XOR'd by random seed.
+    var r = lcg(Math.abs(index^seed), x, y);
     
     // Sign.
     var sign;
+    var max = Math.pow(x, y);
     if (r < max) {
         // Negative / downward.
         sign = "-";
@@ -334,7 +362,7 @@ function generatePieces() {
     } else if (nb == 3) {
         col = "col-xs-12 col-sm-6 col-md-4";
     } else {
-        col = "col-xs-12 col-sm-6 col-md-4";
+        col = "col-xs-12 col-sm-6 col-md-4 col-lg-3";
     }
     
     // Generate piece output elements.
@@ -343,7 +371,7 @@ function generatePieces() {
         piece += "<input id='piece" + i + "-select' type='checkbox' checked/> ";
         piece += "<label for='piece" + i + "-select' class='thumbnail' style='text-align: center'>";
         piece += "<svg></svg><br/>";
-        piece += "<input class='sn' type='text' placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'>";
+        piece += "<input class='sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'>";
         piece += "</label>";
         piece += "</div>";
         $pieces.append(piece);
@@ -352,8 +380,9 @@ function generatePieces() {
     // Generate permutations.
     var x = $("#x").val(); 
     var y = $("#y").val();
+    var seed = Math.floor(Math.random() * 0x7FFFFFFF);
     $pieces.find(".piece").each(function(index, element) {
-        $(element).find(".sn").val(generatePermutation(x, y));
+        $(element).find(".sn").val(generatePermutation(index, seed, x, y));
         updatePiece(element);
     });
 }
