@@ -300,7 +300,8 @@ function piecesToPDF(orient, format, pieces) {
     }
     
     // Return as data URI.
-    return pdf.output('datauristring');
+    // return pdf.output('datauristring');
+    pdf.output("save");//FRED
 }
 
 
@@ -329,20 +330,21 @@ function generatePieces() {
     if (nb == 1) {
         col = "col-xs-12";
     } else if (nb == 2) {
-        col = "col-xs-12";
-    } else if (nb == 3) {
         col = "col-xs-12 col-sm-6";
+    } else if (nb == 3) {
+        col = "col-xs-12 col-sm-6 col-md-4";
     } else {
         col = "col-xs-12 col-sm-6 col-md-4";
     }
     
     // Generate piece output elements.
     for (var i = 1; i <= nb; i++) {
-        var piece = "<div class='" + col + "'>";
-        piece += "<div id='piece" + i + "' class='thumbnail piece' style='text-align: center'>";
+        var piece = "<div id='piece" + i + "' class='piece " + col + "' _data-toggle='buttons'>";
+        piece += "<input id='piece" + i + "-select' type='checkbox' checked/> ";
+        piece += "<label for='piece" + i + "-select' class='thumbnail' style='text-align: center'>";
         piece += "<svg></svg><br/>";
         piece += "<input class='sn' type='text' placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'>";
-        piece += "</div>";
+        piece += "</label>";
         piece += "</div>";
         $pieces.append(piece);
     }

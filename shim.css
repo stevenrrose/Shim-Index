@@ -8,9 +8,24 @@
     stroke: black; 
     stroke-width: 0.1;
 }
+.piece input[type="checkbox"] {
+    position: absolute;
+    margin: 10px;
+}
+.piece input[type="checkbox"] + label {
+    background-color: #e0e0e0;
+    _background-image: linear-gradient(to bottom,#e0e0e0 0,#b0b0b0 100%);
+    opacity: 0.5;
+}
+.piece input[type="checkbox"]:checked + label {
+    background-color: #fff;
+    _background-image: inherit;
+    opacity: 1.0;
+}
 .piece  svg {
-    width: auto;
+    width: 256px;
     height: 256px;
+    margin-top: 10px;
 }
 #pdf {
     width: 100%;
