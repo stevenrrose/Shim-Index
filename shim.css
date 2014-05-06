@@ -32,3 +32,9 @@
     height: 100%;
     border: 1px solid black;
 }
+#cropped {
+    display: none;
+}
+#cropped-label {
+    font-style:italic;
+}

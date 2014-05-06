@@ -346,6 +346,15 @@ var pieces;
   * Generate a new set of pieces.
   */
 function generatePieces() {
+    // Generate seed.
+    var seed;
+    if ($("#random")[0].checked) {
+        seed = Math.floor(Math.random() * 0x7FFFFFFF);
+        $("#seed").val(seed);
+    } else {
+        seed = $("#seed").val();
+    }
+
     // Clear existing pieces.
     pieces = new Object();
     var $pieces = $("#pieces");
@@ -354,24 +363,53 @@ function generatePieces() {
     var nb = $("#nb").val();
     
     // Adjust column layout.
+    var columns = parseInt($("#columns").val());
     var col;
-    if (nb == 1) {
-        col = "col-xs-12";
-    } else if (nb == 2) {
-        col = "col-xs-12 col-sm-6";
-    } else if (nb == 3) {
-        col = "col-xs-12 col-sm-6 col-md-4";
-    } else {
-        col = "col-xs-12 col-sm-6 col-md-4 col-lg-3";
+    switch (columns) {
+        case 0:
+            // Automatic, use 4-column responsive layout.
+            columns = 4;
+            col = "col-xs-12";
+            if (nb >= 2) {
+                col += " col-sm-6";
+            }
+            if (nb >= 3) {
+                col += " col-md-4";
+            }
+            if (nb >= 4) {
+                col += " col-lg-3";
+            }
+            break;
+            
+        case 1:
+            col = "col-xs-12";
+            break;
+            
+        case 2:
+            col = "col-xs-12 col-sm-6";
+            break;
+            
+        case 3:
+            col = "col-xs-12 col-sm-4";
+            break;
+            
+        case 4:
+            col = "col-xs-12 col-sm-3";
+            break;
+            
+        case 6:
+            col = "col-xs-12 col-sm-2";
+            break;
     }
+    var rows = parseInt($("#rows").val());
     
     // Generate piece output elements.
     for (var i = 1; i <= nb; i++) {
-        var piece = "<div id='piece" + i + "' class='piece " + col + "' _data-toggle='buttons'>";
+        var piece = "<div id='piece" + i + "' class='form-inline piece " + col + "' _data-toggle='buttons'>";
         piece += "<input id='piece" + i + "-select' type='checkbox' checked/> ";
         piece += "<label for='piece" + i + "-select' class='thumbnail' style='text-align: center'>";
         piece += "<svg></svg><br/>";
-        piece += "<input class='sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'>";
+        piece += "<input class='form-control sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'>";
         piece += "</label>";
         piece += "</div>";
         $pieces.append(piece);
@@ -380,7 +418,6 @@ function generatePieces() {
     // Generate permutations.
     var x = $("#x").val(); 
     var y = $("#y").val();
-    var seed = Math.floor(Math.random() * 0x7FFFFFFF);
     $pieces.find(".piece").each(function(index, element) {
         $(element).find(".sn").val(generatePermutation(index, seed, x, y));
         updatePiece(element);
@@ -415,13 +452,12 @@ function updatePiece(element) {
 }
 
 /**
- * Print existing pieces.
+ * Output pieces to PDF.
  */
-function printPieces() {
-    // Output pieces as PDF to iframe.
-    $("#pdf").attr('src', piecesToPDF(
+function downloadPDF() {
+    piecesToPDF(
         $("[name='orient']:checked").val(), 
         $("[name='format']:checked").val(),
         pieces
-    ));
+    );
 }
