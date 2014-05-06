@@ -13,6 +13,9 @@ var shimAngle = 2*Math.asin(0.5/shimRatio);
 /** Size of negative space in base units. */
 var negativeSpace = 6;
 
+/** Maximum integer value. */
+var INT_MAX = Math.pow(2,53);
+
 /**
  * Linear congruential generator x_n+1 = (a.x_n + c) mod m.
  *
@@ -308,7 +311,7 @@ function drawPDF(piece, pdf) {
  *  @param format   Page format ('a3', 'a4','a5' ,'letter' ,'legal').
  *
  *  @return PDF data URI.
-  */
+ */
 function piecesToPDF(orient, format, pieces) {
     // Create jsPDF object.
     var pdf = new jsPDF(orient, 'mm', format);
@@ -340,86 +343,155 @@ function piecesToPDF(orient, format, pieces) {
  */
 
 /** Associative array mapping piece ids (not S/N) to piece objects. */
-var pieces;
+var pieces;//FIXME remove
 
 /**
-  * Generate a new set of pieces.
-  */
+ * Generate a new set of pieces.
+ */
 function generatePieces() {
-    // Generate seed.
-    var seed;
     if ($("#random")[0].checked) {
-        seed = Math.floor(Math.random() * 0x7FFFFFFF);
+        // Generate random seed.
+        var seed = Math.floor(Math.random() * 0x7FFFFFFF);
         $("#seed").val(seed);
-    } else {
-        seed = $("#seed").val();
     }
 
+    // Display first page
+    displayPieces(0);
+}
+
+/** 
+ * Display pieces for a given page.
+ *
+ *  @param page     Page number (zero-indexed).
+ */
+function displayPieces(page) {
+    var x = parseInt($("#x").val());
+    var y = parseInt($("#y").val());
+    var nb = parseInt($("#nb").val());
+    var seed = parseInt($("#seed").val());
+
+    if ($("#max")[0].checked) {
+        // Use max number of pieces.
+        nb = 2*Math.pow(x,y);
+    }
+    
+    // Nb cannot exceed the max value.
+    nb = Math.min(INT_MAX, nb);
+    
+    // Adjust column layout.
+    var columns = parseInt($("#columns").val());
+    var colClass;
+    switch (columns) {
+        case 0:
+            // Automatic, use 4-column responsive layout.
+            columns = 4;
+            colClass = "col-xs-12";
+            if (nb >= 2) {
+                colClass += " col-sm-6";
+            }
+            if (nb >= 3) {
+                colClass += " col-md-4";
+            }
+            if (nb >= 4) {
+                colClass += " col-lg-3";
+            }
+            break;
+            
+        case 1:
+            colClass = "col-xs-12";
+            break;
+            
+        case 2:
+            colClass = "col-xs-12 col-sm-6";
+            break;
+            
+        case 3:
+            colClass = "col-xs-12 col-sm-4";
+            break;
+            
+        case 4:
+            colClass = "col-xs-12 col-sm-3";
+            break;
+            
+        case 6:
+            colClass = "col-xs-12 col-sm-2";
+            break;
+    }
+    var rows = parseInt($("#rows").val());
+
+    var nbPerPage = columns*rows;
+    var nbPages = Math.ceil(nb/nbPerPage);
+    page = Math.max(0, Math.min(page, nbPages-1)); // Sanity check.
+    
+    // Display pager.
+    var $pager = $("#pager");
+    $pager.empty();
+    if (nbPages > 1) {
+        var pager = "<ul class='pagination'>";
+        pager += "<li" + (page==0?" class='disabled'":"") + "><a href='javascript:displayPieces(" + Math.max(0,page-1) + ")'>&laquo;</a></li>";
+        console.log(nbPages);
+        for (var i = 0; i < nbPages; i++) {
+            if (nbPages > 10) {
+                // Limit buttons to 10, add ellipses for missing buttons.
+                if (page < 5) {
+                    if (i == 8) {
+                        // Ellipsis at end.
+                        pager += "<li class='disabled'><span>...</span></li>";
+                        i = nbPages-2;
+        console.log("end ellipsis", i);
+                        continue;
+                    }
+                } else if (page >= nbPages-5) {
+                    if (i == 1) {
+                        // Ellipsis at beginning.
+                        pager += "<li class='disabled'><span>...</span></li>";
+                        i = nbPages-9;
+                        continue;
+                    }
+                } else {
+                    if (i == 1) {
+                        // Ellipsis at beginning.
+                        pager += "<li class='disabled'><span>...</span></li>";
+                        i = page-3;
+                        continue;
+                    } else if (i == page+3) {
+                        // Ellipsis at end.
+                        pager += "<li class='disabled'><span>...</span></li>";
+                        i = nbPages-2;
+                        continue;
+                    }
+                }
+            }
+            pager += "<li" + (i==page?" class='active'":"") + "><a href='javascript:displayPieces(" + i + ")'>" + (i+1) + "</a></li>";
+        }
+        pager += "<li" + (page==nbPages-1?" class='disabled'":"") + "><a href='javascript:displayPieces(" + Math.min(page+1,nbPages-1) + ")'>&raquo;</a></li>";
+        pager += "</ul>";
+        $pager.append(pager);
+    }    
+    
     // Clear existing pieces.
     pieces = new Object();
     var $pieces = $("#pieces");
     $pieces.empty();
     
-    var nb = $("#nb").val();
-    
-    // Adjust column layout.
-    var columns = parseInt($("#columns").val());
-    var col;
-    switch (columns) {
-        case 0:
-            // Automatic, use 4-column responsive layout.
-            columns = 4;
-            col = "col-xs-12";
-            if (nb >= 2) {
-                col += " col-sm-6";
-            }
-            if (nb >= 3) {
-                col += " col-md-4";
-            }
-            if (nb >= 4) {
-                col += " col-lg-3";
-            }
-            break;
-            
-        case 1:
-            col = "col-xs-12";
-            break;
-            
-        case 2:
-            col = "col-xs-12 col-sm-6";
-            break;
-            
-        case 3:
-            col = "col-xs-12 col-sm-4";
-            break;
-            
-        case 4:
-            col = "col-xs-12 col-sm-3";
-            break;
-            
-        case 6:
-            col = "col-xs-12 col-sm-2";
-            break;
-    }
-    var rows = parseInt($("#rows").val());
-    
     // Generate piece output elements.
-    for (var i = 1; i <= nb; i++) {
-        var piece = "<div id='piece" + i + "' class='form-inline piece " + col + "' _data-toggle='buttons'>";
-        piece += "<input id='piece" + i + "-select' type='checkbox' checked/> ";
-        piece += "<label for='piece" + i + "-select' class='thumbnail' style='text-align: center'>";
+    var begin = nbPerPage*page;
+    var end = Math.min(begin+nbPerPage, nb);
+    for (var i = begin; i < end; i++) {
+        var piece = "<div id='piece-" + i + "' class='form-inline piece " + colClass + "'>";
+        piece += "<input id='piece-" + i + "-select' type='checkbox' checked/> ";
+        piece += "<label for='piece-" + i + "-select' class='thumbnail' style='text-align: center'>";
         piece += "<svg></svg><br/>";
-        piece += "<input class='form-control sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'>";
+        piece += "<input class='form-control sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'"
+                 + " value='" + generatePermutation(i, seed, x, y) + "'"
+                 + "/>";
         piece += "</label>";
         piece += "</div>";
         $pieces.append(piece);
     }
     
-    // Generate permutations.
-    var x = $("#x").val(); 
-    var y = $("#y").val();
+    // Display pieces.
     $pieces.find(".piece").each(function(index, element) {
-        $(element).find(".sn").val(generatePermutation(index, seed, x, y));
         updatePiece(element);
     });
 }
