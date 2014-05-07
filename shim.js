@@ -13,9 +13,6 @@ var shimAngle = 2*Math.asin(0.5/shimRatio);
 /** Size of negative space in base units. */
 var negativeSpace = 6;
 
-/** Maximum integer value. */
-var INT_MAX = Math.pow(2,53);
-
 /**
  * Linear congruential generator x_n+1 = (a.x_n + c) mod m.
  *
@@ -342,57 +339,99 @@ function piecesToPDF(orient, format, pieces) {
  *
  */
 
-/** Associative array mapping piece ids (not S/N) to piece objects. */
-var pieces;//FIXME remove
+/** Maximum integer value. */
+var MAX_INT = Math.pow(2,53);
+
+/** Handles. */
+var x, y;
+
+/** Permutation seed. */
+var seed;
+
+/** Number of generated pieces. */
+var nbPieces;
+
+/** Columns and rows to display. */
+var columns, rows;
+
+/** Column class for piece elements. */
+var colClass;
+
+/** Paging. */
+var nbPages, nbPerPage;
+
+/** Default selection state. */
+var defaultSelected;
+
+/** Piecewise selection toggle state. */
+var pieceToggle;
+
+/** Number of toggled pieces. We can't rely on pieceToggle.length because JS 
+  * may switch between vector and object for sparse array storage. */
+var nbToggle;
+  
+/**
+ * Ensure that permutation is not too large. Else disable interface elements.
+ */
+ 
+function validatePermutationSize() {
+    var x = parseInt($("#x").val());
+    var y = parseInt($("#y").val());
+    var nbPieces = 2*Math.pow(x,y);
+    if (nbPieces > MAX_INT) {
+        // Permutation too large.
+        $("#generate").removeClass("btn-default").addClass("btn-danger").attr("disabled",true);
+        $("#x, #y").parent().addClass("has-error bg-danger");
+        $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='glyphicon glyphicon-warning-sign'></span> Permutation size too large!</div>");
+    } else {
+        $("#generate").removeClass("btn-danger").addClass("btn-primary").removeAttr("disabled");
+        $("#x, #y").parent().removeClass("has-error bg-danger");
+        $("#message").removeClass("panel-body").empty();
+    }
+}
 
 /**
  * Generate a new set of pieces.
  */
+
 function generatePieces() {
+    // Get all parameters.
+    x = parseInt($("#x").val());
+    y = parseInt($("#y").val());
+    
     if ($("#random")[0].checked) {
         // Generate random seed.
-        var seed = Math.floor(Math.random() * 0x7FFFFFFF);
+        seed = Math.floor(Math.random() * 0x7FFFFFFF);
         $("#seed").val(seed);
     }
-
-    // Display first page
-    displayPieces(0);
-}
-
-/** 
- * Display pieces for a given page.
- *
- *  @param page     Page number (zero-indexed).
- */
-function displayPieces(page) {
-    var x = parseInt($("#x").val());
-    var y = parseInt($("#y").val());
-    var nb = parseInt($("#nb").val());
-    var seed = parseInt($("#seed").val());
-
+    
+    seed = parseInt($("#seed").val());
+    nbPieces = parseInt($("#nbPieces").val());
     if ($("#max")[0].checked) {
         // Use max number of pieces.
-        nb = 2*Math.pow(x,y);
+        nbPieces = 2*Math.pow(x,y);
     }
     
-    // Nb cannot exceed the max value.
-    nb = Math.min(INT_MAX, nb);
+    // Set default selection state.
+    defaultSelected = true;
+    pieceToggle = Array();
+    nbToggle = 0;
+    updateCounters();
     
     // Adjust column layout.
-    var columns = parseInt($("#columns").val());
-    var colClass;
+    columns = parseInt($("#columns").val());
     switch (columns) {
         case 0:
             // Automatic, use 4-column responsive layout.
             columns = 4;
             colClass = "col-xs-12";
-            if (nb >= 2) {
+            if (nbPieces >= 2) {
                 colClass += " col-sm-6";
             }
-            if (nb >= 3) {
+            if (nbPieces >= 3) {
                 colClass += " col-md-4";
             }
-            if (nb >= 4) {
+            if (nbPieces >= 4) {
                 colClass += " col-lg-3";
             }
             break;
@@ -417,19 +456,34 @@ function displayPieces(page) {
             colClass = "col-xs-12 col-sm-2";
             break;
     }
-    var rows = parseInt($("#rows").val());
+    rows = parseInt($("#rows").val());
+    
+    // Paging.
+    nbPerPage = columns*rows;
+    nbPages = Math.ceil(nbPieces/nbPerPage);
 
-    var nbPerPage = columns*rows;
-    var nbPages = Math.ceil(nb/nbPerPage);
-    page = Math.max(0, Math.min(page, nbPages-1)); // Sanity check.
+    // Display first page
+    displayPieces(0);
+}
+
+/** 
+ * Display pieces for a given page.
+ *
+ *  @param page     Page number (zero-indexed).
+ */
+function displayPieces(page) {
+    // Sanity check.
+    page = Math.max(0, Math.min(page, nbPages-1));
+    
+    // Display toolbar.
+    $("#toolbar").removeClass("hidden");
     
     // Display pager.
     var $pager = $("#pager");
     $pager.empty();
     if (nbPages > 1) {
-        var pager = "<ul class='pagination'>";
+        var pager = "<ul class='pagination pagination-sm'>";
         pager += "<li" + (page==0?" class='disabled'":"") + "><a href='javascript:displayPieces(" + Math.max(0,page-1) + ")'>&laquo;</a></li>";
-        console.log(nbPages);
         for (var i = 0; i < nbPages; i++) {
             if (nbPages > 10) {
                 // Limit buttons to 10, add ellipses for missing buttons.
@@ -438,7 +492,6 @@ function displayPieces(page) {
                         // Ellipsis at end.
                         pager += "<li class='disabled'><span>...</span></li>";
                         i = nbPages-2;
-        console.log("end ellipsis", i);
                         continue;
                     }
                 } else if (page >= nbPages-5) {
@@ -470,17 +523,20 @@ function displayPieces(page) {
     }    
     
     // Clear existing pieces.
-    pieces = new Object();
     var $pieces = $("#pieces");
     $pieces.empty();
     
     // Generate piece output elements.
     var begin = nbPerPage*page;
-    var end = Math.min(begin+nbPerPage, nb);
+    var end = Math.min(begin+nbPerPage, nbPieces);
     for (var i = begin; i < end; i++) {
+        // Selection state.
+        var selected = defaultSelected;
+        if (pieceToggle[i]) selected = !selected;
+        
         var piece = "<div id='piece-" + i + "' class='form-inline piece " + colClass + "'>";
-        piece += "<input id='piece-" + i + "-select' type='checkbox' checked/> ";
-        piece += "<label for='piece-" + i + "-select' class='thumbnail' style='text-align: center'>";
+        piece += "<input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/> ";
+        piece += "<label for='piece-select-" + i + "' class='thumbnail'>";
         piece += "<svg></svg><br/>";
         piece += "<input class='form-control sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'"
                  + " value='" + generatePermutation(i, seed, x, y) + "'"
@@ -516,11 +572,61 @@ function updatePiece(element) {
     // Generate piece.
     var cropped = $("#cropped")[0].checked;    
     var piece = computePiece(sn, cropped);
-    pieces[element.id] = piece;
     
     // Output to SVG.
     var svg = $(element).find("svg")[0];
     drawSVG(piece, svg);
+}
+
+/**
+ * Toggle select state of given piece.
+ *
+ *  @param piece    Piece number to toggle.
+ */
+function togglePiece(piece) {
+    if (pieceToggle[piece]) {
+        delete pieceToggle[piece];
+        nbToggle--;
+    } else {
+        pieceToggle[piece] = true;
+        nbToggle++;
+    }
+    updateCounters();
+    
+}
+
+/**
+ * Check/uncheck visible pieces.
+ *
+ *  @param  check   Whether to check or uncheck pieces.
+ */
+function checkVisible(check) {
+    $(".piece-select").each(function(index, element) {
+        if (element.checked^check) {
+            $(element).click();
+        }
+    });
+}
+
+/**
+ * Check/uncheck all pieces.
+ *
+ *  @param  check   Whether to check or uncheck pieces.
+ */
+function checkAll(check) {
+    checkVisible(check);
+    defaultSelected = check;
+    nbToggle = 0;
+    pieceToggle = Array();
+    updateCounters();
+}
+
+/**
+ * Update piece counters.
+ */
+function updateCounters() {
+    $("#totalPieces").html(nbPieces);
+    $("#selectedPieces").html(defaultSelected ? nbPieces - nbToggle : nbToggle);
 }
 
 /**

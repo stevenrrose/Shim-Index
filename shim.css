@@ -8,16 +8,19 @@
     stroke: black; 
     stroke-width: 0.1;
 }
-.piece input[type="checkbox"] {
+.piece .thumbnail {
+    text-align: center;
+}
+.piece .piece-select {
     position: absolute;
     margin: 10px;
 }
-.piece input[type="checkbox"] + label {
+.piece .piece-select + .thumbnail {
     background-color: #e0e0e0;
     _background-image: linear-gradient(to bottom,#e0e0e0 0,#b0b0b0 100%);
     opacity: 0.5;
 }
-.piece input[type="checkbox"]:checked + label {
+.piece .piece-select:checked + .thumbnail {
     background-color: #fff;
     _background-image: inherit;
     opacity: 1.0;
@@ -37,4 +40,10 @@
 }
 #cropped-label {
     font-style:italic;
+}
+#pager .pagination {
+    margin: 0;
+}
+#toolbar .btn-group {
+    margin-bottom: 10px;
 }

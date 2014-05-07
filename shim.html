@@ -44,25 +44,28 @@
                         <input type="number" class="form-control" id="y" value="5" min="1" max="15" />
                         <p class="help-block">Slots per piece</p>
                     </div>
+                        <script>
+                        $("#x, #y").change(validatePermutationSize);
+                        </script>
                     <div class="form-group col-sm-4 col-md-2">
-                        <label for="nb" class="control-label">Pieces</label>
+                        <label for="nbPieces" class="control-label">Pieces</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="nb" value="1" min="1" max="20" />
+                            <input type="number" class="form-control" id="nbPieces" value="1" min="1" max="20" />
                             <label class="input-group-addon"><input type="checkbox" id="max" /> Max</label>
                         </div>
                         <p class="help-block">Nb pieces to generate</p>
                         <script>
                         $("#max").change(function() {
                             if (this.checked) {
-                                $("#nb").attr("disabled", "disabled");
+                                $("#nbPieces").attr("disabled", true);
                             } else {
-                                $("#nb").removeAttr("disabled");
+                                $("#nbPieces").removeAttr("disabled");
                             }
                         });
                         </script>
                     </div>
                     <div class="form-group col-sm-6 col-md-3">
-                        <label for="nb" class="control-label">Seed</label>
+                        <label for="seed" class="control-label">Seed</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="seed" value="1" min="1" max="2147483647" disabled />
                             <label class="input-group-addon"><input type="checkbox" id="random" checked /> Random</label>
@@ -71,7 +74,7 @@
                         <script>
                         $("#random").change(function() {
                             if (this.checked) {
-                                $("#seed").attr("disabled", "disabled");
+                                $("#seed").attr("disabled", true);
                             } else {
                                 $("#seed").removeAttr("disabled");
                             }
@@ -102,26 +105,38 @@
                     </div>
                 </form>
             </div>
+            
+            <div id="message"></div>
+            
             <div class="panel-footer">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="generatePieces()"><span class="glyphicon glyphicon-refresh"></span> Generate</button>
-                    <input type="checkbox" id="cropped" onchange="updatePieces()"/>
-                    <label for="cropped" id="cropped-label" class="btn btn-default" data-toggle="button" data-cropped-text="Cropped">Uncropped</label>
-                </div>
-                <script>
-                $("#cropped-label").click(function() {
-                    $("#cropped").click();
-                });
-                $("#cropped").change(function() {
-                    $("#cropped-label").button(this.checked?"cropped":'reset');
-                });
-                </script>
+                <button type="button" id="generate" class="btn btn-primary" onclick="generatePieces()"><span class="glyphicon glyphicon-refresh"></span> Generate</button>
                 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#print"><span class="glyphicon glyphicon-print"></span> Print...</button>
             </div>
         </div>        
     </div>
-    
-    <div id="pager" class="container"></div>
+
+    <div id="toolbar" class="container hidden">
+        <div class="btn-toolbar">
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-default" onclick="checkVisible(true)"><span class="glyphicon glyphicon-ok-sign"></span> Check visible</button>
+                <button type="button" class="btn btn-default" onclick="checkVisible(false)"><span class="glyphicon glyphicon-remove-sign"></span> Clear visible</button>
+                <button type="button" class="btn btn-default" onclick="checkAll(true)"><span class="glyphicon glyphicon-ok-circle"></span> Check all</button>
+                <button type="button" class="btn btn-default" onclick="checkAll(false)"><span class="glyphicon glyphicon-remove-circle"></span> Clear all</button>
+                <input type="checkbox" id="cropped" onchange="updatePieces()"/>
+                <label for="cropped" id="cropped-label" class="btn btn-default" data-toggle="button" data-cropped-text="Cropped">Uncropped</label>
+            </div>
+            <script>
+            $("#cropped-label").click(function() {
+                $("#cropped").click();
+            });
+            $("#cropped").change(function() {
+                $("#cropped-label").button(this.checked?"cropped":'reset');
+            });
+            </script>
+            <div id="pager" class="btn-group"></div>
+        </div>
+        <div><span id="selectedPieces"></span> selected / <span id="totalPieces"></span> total</div>
+    </div>
     
     <div class="container-fluid" id="pieces">
     </div>
