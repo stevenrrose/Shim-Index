@@ -245,31 +245,31 @@ function computePiece(sn, crop) {
 }
 
 /**
- * Draw a piece as SVG.
+ * Output a piece as SVG.
  *
  *  @param piece        The piece data.
- *  @param element      SVG DOM element for output (or CSS selector).
+ *
+ *  @return SVG XML data.
  */
-function drawSVG(piece, element) {
-    var svg = Snap(element);
-    svg.clear();
+function drawSVG(piece) {
+    var res = "";
     for (var iSlot = 0; iSlot < piece.slots.length; iSlot++) {
         var slot = piece.slots[iSlot];
         for (var iShim = 0; iShim < slot.shims.length; iShim++) {
             var shim = slot.shims[iShim];
-            svg.polygon(
-                shim[0].x, shim[0].y,
-                shim[1].x, shim[1].y,
-                shim[2].x, shim[2].y
-            ).attr('class', "shim");
+            res += "<polygon points='"
+                +       shim[0].x + "," + shim[0].y
+                + "," + shim[1].x + "," + shim[1].y
+                + "," + shim[2].x + "," + shim[2].y
+                + "' class='shim'/>";
         }
     }
-    svg.rect(
-        piece.bbox.x, piece.bbox.y, 
-        piece.bbox.x2-piece.bbox.x, piece.bbox.y2-piece.bbox.y
-    ).attr('class', "bbox");
-    
-    svg.attr('viewBox', svg.getBBox().vb);
+    res += "<rect x='" + piece.bbox.x 
+        + "' y='" + piece.bbox.y
+        + "' width='" + (piece.bbox.x2-piece.bbox.x)
+        + "' height='"+ (piece.bbox.y2-piece.bbox.y)
+        + "' class='bbox'/>";
+    return res;
 }
 
 /**
@@ -345,11 +345,14 @@ var MAX_INT = Math.pow(2,53);
 /** Handles. */
 var x, y;
 
-/** Permutation seed. */
-var seed;
+/** Maximum piece width. */
+var maxWidth;
 
 /** Number of generated pieces. */
 var nbPieces;
+
+/** Permutation seed. */
+var seed;
 
 /** Columns and rows to display. */
 var columns, rows;
@@ -380,11 +383,11 @@ function validatePermutationSize() {
     var nbPieces = 2*Math.pow(x,y);
     if (nbPieces > MAX_INT) {
         // Permutation too large.
-        $("#generate").removeClass("btn-default").addClass("btn-danger").attr("disabled",true);
+        $("#generate").removeClass("btn-default").addClass("btn-danger").attr('disabled',true);
         $("#x, #y").parent().addClass("has-error bg-danger");
         $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='glyphicon glyphicon-warning-sign'></span> Permutation size too large!</div>");
     } else {
-        $("#generate").removeClass("btn-danger").addClass("btn-primary").removeAttr("disabled");
+        $("#generate").removeClass("btn-danger").addClass("btn-primary").removeAttr('disabled');
         $("#x, #y").parent().removeClass("has-error bg-danger");
         $("#message").removeClass("panel-body").empty();
     }
@@ -399,18 +402,21 @@ function generatePieces() {
     x = parseInt($("#x").val());
     y = parseInt($("#y").val());
     
-    if ($("#random")[0].checked) {
-        // Generate random seed.
-        seed = Math.floor(Math.random() * 0x7FFFFFFF);
-        $("#seed").val(seed);
-    }
-    
-    seed = parseInt($("#seed").val());
     nbPieces = parseInt($("#nbPieces").val());
     if ($("#max")[0].checked) {
         // Use max number of pieces.
         nbPieces = 2*Math.pow(x,y);
     }
+    
+    maxWidth = Math.ceil(y/2)*x + negativeSpace*(y-1);
+
+
+    if ($("#random")[0].checked) {
+        // Generate random seed.
+        seed = Math.floor(Math.random() * 0x7FFFFFFF);
+        $("#seed").val(seed);
+    }
+    seed = parseInt($("#seed").val());
     
     // Set default selection state.
     defaultSelected = true;
@@ -537,10 +543,11 @@ function displayPieces(page) {
         var piece = "<div id='piece-" + i + "' class='form-inline piece " + colClass + "'>";
         piece += "<input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/> ";
         piece += "<label for='piece-select-" + i + "' class='thumbnail'>";
-        piece += "<svg></svg><br/>";
-        piece += "<input class='form-control sn' type='text' readonly placeholder='Piece S/N' onkeyup='updatePiece(this.parentElement)' onchange='updatePiece(this.parentElement)'"
-                 + " value='" + generatePermutation(i, seed, x, y) + "'"
-                 + "/>";
+        piece += "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg><br/>";
+        piece += "<div class='input-group input-group-sm'>";
+        piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, seed, x, y) + "' size='" + y + "'/>";
+        piece += "<span class='input-group-btn'><button type='button' class='btn btn-default' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'><span class='glyphicon glyphicon-download'></span> SVG</button></span>"
+        piece += "</div>";
         piece += "</label>";
         piece += "</div>";
         $pieces.append(piece);
@@ -574,8 +581,16 @@ function updatePiece(element) {
     var piece = computePiece(sn, cropped);
     
     // Output to SVG.
-    var svg = $(element).find("svg")[0];
-    drawSVG(piece, svg);
+    var $svg = $(element).find("svg");
+    $svg.html(drawSVG(piece));
+    
+    // Adjust viewbox so that all pieces are centered and use the same scale.
+    // Don't use jQuery as it is case-insensitive.
+    $svg[0].setAttribute('viewBox', 
+        ((piece.bbox.x2-piece.bbox.x)-maxWidth)/2
+        + " "
+        + ((piece.bbox.y2-piece.bbox.y)-shimRatio)/2
+        + " " + maxWidth + " " + shimRatio);
 }
 
 /**
@@ -628,6 +643,30 @@ function updateCounters() {
     $("#totalPieces").html(nbPieces);
     $("#selectedPieces").html(defaultSelected ? nbPieces - nbToggle : nbToggle);
 }
+
+/**
+ * Download piece as SVG.
+ *
+ *  @param sn   The piece serial number.
+ */
+function downloadSVG(sn) {
+    // Generate piece.
+    var cropped = $("#cropped")[0].checked;    
+    var piece = computePiece(sn, cropped);
+    
+    // Output to SVG.
+    var svg = "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'"
+        +   " viewBox='" + piece.bbox.x + " " + piece.bbox.y 
+        +   " " + (piece.bbox.x2-piece.bbox.x) + " " + (piece.bbox.y2-piece.bbox.y)
+        +   "'>";
+    svg += "<style>.shim,.bbox{fill: none;stroke:black;stroke-width:0.1;}</style>";
+    svg += drawSVG(piece);
+    svg += "</svg>"
+
+    blob = new Blob([svg], {type: "image/svg+xml"});
+
+    saveAs(blob, sn + ".svg");
+} 
 
 /**
  * Output pieces to PDF.

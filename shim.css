@@ -1,9 +1,4 @@
-.shim {
-    fill: none; 
-    stroke: black; 
-    stroke-width: 0.1;
-}
-.bbox {
+.shim, .bbox {
     fill: none; 
     stroke: black; 
     stroke-width: 0.1;
@@ -26,7 +21,6 @@
     opacity: 1.0;
 }
 .piece  svg {
-    width: 256px;
     height: 256px;
     margin-top: 10px;
 }
@@ -39,11 +33,15 @@
     display: none;
 }
 #cropped-label {
-    font-style:italic;
+    font-style: italic;
 }
 #pager .pagination {
     margin: 0;
 }
 #toolbar .btn-group {
     margin-bottom: 10px;
+}
+#counter {
+    font-size: smaller;
+    font-style:italic;
 }

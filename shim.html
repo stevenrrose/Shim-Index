@@ -15,9 +15,6 @@
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
     <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     
-    <!-- Snap.svg -->
-    <script src="snap.svg-min.js"></script>
-    
     <!-- jsPDF -->
     <script src="jspdf.source.js"></script>
 
@@ -50,16 +47,16 @@
                     <div class="form-group col-sm-4 col-md-2">
                         <label for="nbPieces" class="control-label">Pieces</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="nbPieces" value="1" min="1" max="20" />
+                            <input type="number" class="form-control" id="nbPieces" value="1" min="1" max="1000" />
                             <label class="input-group-addon"><input type="checkbox" id="max" /> Max</label>
                         </div>
                         <p class="help-block">Nb pieces to generate</p>
                         <script>
                         $("#max").change(function() {
                             if (this.checked) {
-                                $("#nbPieces").attr("disabled", true);
+                                $("#nbPieces").attr('disabled', true);
                             } else {
-                                $("#nbPieces").removeAttr("disabled");
+                                $("#nbPieces").removeAttr('disabled');
                             }
                         });
                         </script>
@@ -74,9 +71,9 @@
                         <script>
                         $("#random").change(function() {
                             if (this.checked) {
-                                $("#seed").attr("disabled", true);
+                                $("#seed").attr('disabled', true);
                             } else {
-                                $("#seed").removeAttr("disabled");
+                                $("#seed").removeAttr('disabled');
                             }
                         });
                         </script>
@@ -135,7 +132,7 @@
             </script>
             <div id="pager" class="btn-group"></div>
         </div>
-        <div><span id="selectedPieces"></span> selected / <span id="totalPieces"></span> total</div>
+        <p id="counter"><span id="selectedPieces"></span> selected / <span id="totalPieces"></span> total</p>
     </div>
     
     <div class="container-fluid" id="pieces">
