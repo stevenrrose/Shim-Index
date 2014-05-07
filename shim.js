@@ -249,27 +249,27 @@ function computePiece(sn, crop) {
  *
  *  @param piece        The piece data.
  *
- *  @return SVG XML data.
+ *  @return Snap object.
  */
 function drawSVG(piece) {
-    var res = "";
+    var svg = Snap();
     for (var iSlot = 0; iSlot < piece.slots.length; iSlot++) {
         var slot = piece.slots[iSlot];
         for (var iShim = 0; iShim < slot.shims.length; iShim++) {
             var shim = slot.shims[iShim];
-            res += "<polygon points='"
-                +       shim[0].x + "," + shim[0].y
-                + "," + shim[1].x + "," + shim[1].y
-                + "," + shim[2].x + "," + shim[2].y
-                + "' class='shim'/>";
+            svg.polygon(
+                shim[0].x, shim[0].y,
+                shim[1].x, shim[1].y,
+                shim[2].x, shim[2].y
+            ).attr('class', "shim");
         }
     }
-    res += "<rect x='" + piece.bbox.x 
-        + "' y='" + piece.bbox.y
-        + "' width='" + (piece.bbox.x2-piece.bbox.x)
-        + "' height='"+ (piece.bbox.y2-piece.bbox.y)
-        + "' class='bbox'/>";
-    return res;
+    svg.rect(
+        piece.bbox.x, piece.bbox.y,
+        piece.bbox.x2-piece.bbox.x,
+        piece.bbox.y2-piece.bbox.y
+    ).attr('class', "bbox");
+    return svg;
 }
 
 /**
@@ -280,7 +280,7 @@ function drawSVG(piece) {
  */
 function drawPDF(piece, pdf) {
     // Line width. Use same for shims and bbox.
-    pdf.setLineWidth("0.05");
+    pdf.setLineWidth("0.05"*pdf.scale);
     
     for (var iSlot = 0; iSlot < piece.slots.length; iSlot++) {
         var slot = piece.slots[iSlot];
@@ -304,32 +304,78 @@ function drawPDF(piece, pdf) {
 /**
  * Generate a multi-page PDF from a set of pieces.
  *
+ *  @param crop     Cropped output.
  *  @param orient   Orientation ('portrait', 'landscape').
  *  @param format   Page format ('a3', 'a4','a5' ,'letter' ,'legal').
- *
- *  @return PDF data URI.
+ *  @param cols     Minimum number of columns per page.
+ *  @param rows     Minimum number of rows per page.
  */
-function piecesToPDF(orient, format, pieces) {
+function piecesToPDF(crop, orient, format, cols, rows) {
     // Create jsPDF object.
     var pdf = new jsPDF(orient, 'mm', format);
     
     // Scale and margin.
-    pdf.offx = 15; pdf.offy = 15; pdf.scale = 2; // @TODO add settings
+    var margin = 15;
+    var padding = 10;
+    
+    // @TODO room for S/N label
+    
+    // Compute scaling and actual number of rows/cols.
+    var availWidth = pdf.internal.pageSize.width - margin*2 - padding*(cols-1);
+    var availHeight = pdf.internal.pageSize.height - margin*2 - padding*(rows-1);
+    var w = availWidth / cols;
+    var h = availHeight / rows;
+    var scale = Math.min(w/maxWidth, h/shimRatio);
+    w = maxWidth*scale;
+    h = shimRatio*scale;
+    cols = Math.floor((pdf.internal.pageSize.width - margin*2 + padding) / (w + padding));
+    rows = Math.floor((pdf.internal.pageSize.height - margin*2 + padding) / (h + padding));
+    
+    // Max number of pieces to output. // @TODO add settings
+    var nbPrint = Math.min(nbSelected, 10000);
+    
+    //TODO use background scripts for UI update.
     
     // Draw each piece.
-    var first = true;
-    for (var sn in pieces) {
-        if (!first) {
-            pdf.addPage();
-        } else {
-            first = false;
+    pdf.scale = scale;
+    var col=0, row=0, nb = 0;
+    var draw = function(i) {
+        // Next column.
+        if (nb > 0 && ++col >= cols) {
+            // Next row.
+            col = 0;
+            if (++row >= rows) {
+                // Next page.
+                row = 0;
+                pdf.addPage();
+                progress(nb/nbPrint);
+            }
         }
-        drawPDF(pieces[sn], pdf);
+        
+        pdf.offx = margin + (w + padding) * col;
+        pdf.offy = margin + (h + padding) * row;
+        
+        var sn = generatePermutation(i, seed, x, y)
+        drawPDF(computePiece(sn, crop), pdf);
+        return (++nb >= nbPrint);
+    }
+    //@TODO progress bar.
+    var i;
+    if (defaultSelected) {
+        // All pieces but toggled ones.
+        for (i = 0; i < nbPieces; i++) {
+            if (pieceToggle[i]) continue;
+            if (draw(i)) break;
+        }
+    } else {
+        // Only toggled pieces
+        for (i in pieceToggle) {
+            if (draw(parseInt(i))) break;
+        }
     }
     
-    // Return as data URI.
-    // return pdf.output('datauristring');
-    pdf.output("save");//FRED
+    // Save file.
+    pdf.output("save", x+"-"+y+"-"+seed+".pdf");
 }
 
 
@@ -370,9 +416,14 @@ var defaultSelected;
 var pieceToggle;
 
 /** Number of toggled pieces. We can't rely on pieceToggle.length because JS 
-  * may switch between vector and object for sparse array storage. */
+ *  may switch between vector and object for sparse array storage. */
 var nbToggle;
-  
+
+/**
+ * Number of selected pieces.
+ */
+var nbSelected;
+
 /**
  * Ensure that permutation is not too large. Else disable interface elements.
  */
@@ -383,11 +434,11 @@ function validatePermutationSize() {
     var nbPieces = 2*Math.pow(x,y);
     if (nbPieces > MAX_INT) {
         // Permutation too large.
-        $("#generate").removeClass("btn-default").addClass("btn-danger").attr('disabled',true);
+        $("#generate").removeClass("btn-default").addClass("btn-danger").prop('disabled', true);
         $("#x, #y").parent().addClass("has-error bg-danger");
         $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='glyphicon glyphicon-warning-sign'></span> Permutation size too large!</div>");
     } else {
-        $("#generate").removeClass("btn-danger").addClass("btn-primary").removeAttr('disabled');
+        $("#generate").removeClass("btn-danger").addClass("btn-primary").prop('disabled', false);
         $("#x, #y").parent().removeClass("has-error bg-danger");
         $("#message").removeClass("panel-body").empty();
     }
@@ -398,20 +449,24 @@ function validatePermutationSize() {
  */
 
 function generatePieces() {
-    // Get all parameters.
+    $("#print").prop('disabled', false);
+
+    // Get algorithm handles.
     x = parseInt($("#x").val());
     y = parseInt($("#y").val());
-    
+
+    // Number of pieces to generate.
     nbPieces = parseInt($("#nbPieces").val());
-    if ($("#max")[0].checked) {
+    if ($("#max").prop('checked')) {
         // Use max number of pieces.
         nbPieces = 2*Math.pow(x,y);
     }
     
+    // Maximum theoretical piece width.
     maxWidth = Math.ceil(y/2)*x + negativeSpace*(y-1);
 
-
-    if ($("#random")[0].checked) {
+    // Get/generate seed.
+    if ($("#random").prop('checked')) {
         // Generate random seed.
         seed = Math.floor(Math.random() * 0x7FFFFFFF);
         $("#seed").val(seed);
@@ -422,7 +477,7 @@ function generatePieces() {
     defaultSelected = true;
     pieceToggle = Array();
     nbToggle = 0;
-    updateCounters();
+    updateSelected();
     
     // Adjust column layout.
     columns = parseInt($("#columns").val());
@@ -541,14 +596,16 @@ function displayPieces(page) {
         if (pieceToggle[i]) selected = !selected;
         
         var piece = "<div id='piece-" + i + "' class='form-inline piece " + colClass + "'>";
+        piece += "<div class='thumbnail'>";
         piece += "<input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/> ";
-        piece += "<label for='piece-select-" + i + "' class='thumbnail'>";
+        piece += "<label for='piece-select-" + i + "'>";
         piece += "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg><br/>";
+        piece += "</label>";
         piece += "<div class='input-group input-group-sm'>";
         piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, seed, x, y) + "' size='" + y + "'/>";
         piece += "<span class='input-group-btn'><button type='button' class='btn btn-default' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'><span class='glyphicon glyphicon-download'></span> SVG</button></span>"
         piece += "</div>";
-        piece += "</label>";
+        piece += "</div>";
         piece += "</div>";
         $pieces.append(piece);
     }
@@ -577,20 +634,21 @@ function updatePiece(element) {
     var sn = $(element).find(".sn").val().trim();
     
     // Generate piece.
-    var cropped = $("#cropped")[0].checked;    
+    var cropped = $("#cropped").prop('checked');    
     var piece = computePiece(sn, cropped);
     
     // Output to SVG.
-    var $svg = $(element).find("svg");
-    $svg.html(drawSVG(piece));
+    var svg = drawSVG(piece);
     
     // Adjust viewbox so that all pieces are centered and use the same scale.
-    // Don't use jQuery as it is case-insensitive.
-    $svg[0].setAttribute('viewBox', 
+    svg.attr('viewBox', 
         ((piece.bbox.x2-piece.bbox.x)-maxWidth)/2
         + " "
         + ((piece.bbox.y2-piece.bbox.y)-shimRatio)/2
         + " " + maxWidth + " " + shimRatio);
+
+    // Insert into DOM.
+    $(element).find("svg").replaceWith(svg.node);
 }
 
 /**
@@ -606,7 +664,7 @@ function togglePiece(piece) {
         pieceToggle[piece] = true;
         nbToggle++;
     }
-    updateCounters();
+    updateSelected();
     
 }
 
@@ -633,15 +691,17 @@ function checkAll(check) {
     defaultSelected = check;
     nbToggle = 0;
     pieceToggle = Array();
-    updateCounters();
+    updateSelected();
 }
 
 /**
- * Update piece counters.
+ * Update selected piece counters.
  */
-function updateCounters() {
+function updateSelected() {
+    nbSelected = (defaultSelected ? nbPieces - nbToggle : nbToggle);
     $("#totalPieces").html(nbPieces);
-    $("#selectedPieces").html(defaultSelected ? nbPieces - nbToggle : nbToggle);
+    $("#selectedPieces").html(nbSelected);
+    $("#print").prop('disabled', (nbSelected == 0));
 }
 
 /**
@@ -651,30 +711,51 @@ function updateCounters() {
  */
 function downloadSVG(sn) {
     // Generate piece.
-    var cropped = $("#cropped")[0].checked;    
+    var cropped = $("#cropped").prop('checked');
     var piece = computePiece(sn, cropped);
     
     // Output to SVG.
-    var svg = "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'"
-        +   " viewBox='" + piece.bbox.x + " " + piece.bbox.y 
-        +   " " + (piece.bbox.x2-piece.bbox.x) + " " + (piece.bbox.y2-piece.bbox.y)
-        +   "'>";
-    svg += "<style>.shim,.bbox{fill: none;stroke:black;stroke-width:0.1;}</style>";
-    svg += drawSVG(piece);
-    svg += "</svg>"
+    var svg = drawSVG(piece);
+    svg.attr('viewBox', 
+        piece.bbox.x 
+        + " " + piece.bbox.y 
+        + " " 
+        + (piece.bbox.x2-piece.bbox.x) 
+        + " " 
+        + (piece.bbox.y2-piece.bbox.y)
+    );
+    svg.attr({fill: 'none', stroke: 'black', strokeWidth: 0.1});
+    svg.node.parentElement.removeChild(svg.node);
 
-    blob = new Blob([svg], {type: "image/svg+xml"});
-
+    blob = new Blob([svg.outerSVG()], {type: "image/svg+xml"});
     saveAs(blob, sn + ".svg");
+    
 } 
+
+/**
+ * Update progress bar.
+ *
+ *  @param ratio    Progress ratio [0,1].
+ */
+function progress(ratio) {
+    var percent = (ratio*100).toFixed(0);
+    $("#progress .progress-bar").attr('aria-valuenow', percent).attr('style','width:'+percent+'%').find("span").html(percent+"%");
+}
 
 /**
  * Output pieces to PDF.
  */
 function downloadPDF() {
+    var $progress = $("#progress");
+    $progress.removeClass("hidden");
+    
     piecesToPDF(
+        $("#cropped").prop('checked'),
         $("[name='orient']:checked").val(), 
         $("[name='format']:checked").val(),
-        pieces
+        $("#printColumns").val(),
+        $("#printRows").val()
     );
+    
+    $progress.addClass("hidden");
 }

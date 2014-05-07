@@ -10,12 +10,13 @@
     position: absolute;
     margin: 10px;
 }
-.piece .piece-select + .thumbnail {
+.piece .piece-select + label {
+    width: 100%;
     background-color: #e0e0e0;
     _background-image: linear-gradient(to bottom,#e0e0e0 0,#b0b0b0 100%);
     opacity: 0.5;
 }
-.piece .piece-select:checked + .thumbnail {
+.piece .piece-select:checked + label {
     background-color: #fff;
     _background-image: inherit;
     opacity: 1.0;
