@@ -338,6 +338,7 @@ function piecesToPDF(crop, orient, format, cols, rows) {
     
     // Draw each piece.
     pdf.scale = scale;
+    pdf.setFontSize(10);
     var col=0, row=0, nb = 0;
     var draw = function(i) {
         // Next column.
@@ -357,6 +358,7 @@ function piecesToPDF(crop, orient, format, cols, rows) {
         
         var sn = generatePermutation(i, seed, x, y)
         drawPDF(computePiece(sn, crop), pdf);
+        pdf.text(pdf.offx, pdf.offy - 1, sn);
         return (++nb >= nbPrint);
     }
     //@TODO progress bar.

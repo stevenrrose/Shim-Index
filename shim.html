@@ -19,7 +19,7 @@
     <script src="snap.svg-min.js"></script>
 
     <!-- jsPDF -->
-    <script src="jspdf.source.js"></script>
+    <script src="jspdf.min.js"></script>
 
     <!-- Our stuff -->
     <script src="shim.js"></script>
@@ -45,7 +45,7 @@
                         <p class="help-block">Slots per piece</p>
                     </div>
                         <script>
-                        $("#x, #y").change(validatePermutationSize);
+                        $("#x, #y").change(validatePermutationSize).keyup(validatePermutationSize);
                         </script>
                     <div class="form-group col-sm-4 col-md-2">
                         <label for="nbPieces" class="control-label">Pieces</label>
