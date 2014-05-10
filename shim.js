@@ -4,6 +4,12 @@
  *
  */
 
+/** Maximum integer value. */
+var MAX_INT = Math.pow(2,53);
+
+/** Maximum seed value. */
+var MAX_SEED = 999999;
+
 /** Ratio between shim side and base. */
 var shimRatio = 64;
 
@@ -13,18 +19,41 @@ var shimAngle = 2*Math.asin(0.5/shimRatio);
 /** Size of negative space in base units. */
 var negativeSpace = 6;
 
+/** Ten primes used to seed the linear congruential generator. */
+var primes = [53, 59, 61, 67, 71, 73, 79, 83, 89, 97];
+
+/**
+ * Generate increment value for linear congruential generator.
+ *
+ *  @param seed     Seed value whose decimal digits designate prime factors.
+ *
+ *  @return increment value for lcg()
+ */
+function lcg_increment(seed) {
+    seed %= (MAX_SEED+1);
+    if (seed==0) return primes[0];
+    
+    var c = 1;
+    while (seed > 0) {
+        c *= primes[seed % 10];
+        seed = Math.floor(seed / 10);
+    }
+    return c;
+}
+
 /**
  * Linear congruential generator x_n+1 = (a.x_n + c) mod m.
  *
  * Used to generate a non-repeating sequence of m=2x^y integers starting at 0.
  *
  *  @param v    Previous value.
+ *  @param c    Increment.
  *  @param x    Number of shims per shim unit.
  *  @param y    Number of shim units/slots per piece.
  *
  *  @return serial number.
  */
-function lcg(v, x, y) {
+function lcg(v, c, x, y) {
     // Number of desired permutations.
     var m = 2*Math.pow(x, y);
     
@@ -36,45 +65,76 @@ function lcg(v, x, y) {
     // As m=2x^Y, prime factors of m are 2 and x, if x is prime, or x's prime
     // factors otherwise.
     // m is multiple of 4 if and only if x is multiple of 2.
+    // #1 is met if x is less than the lowest prime factor used in 
+    // lcg_increment().
     
-    var c = 982451653;        // Large prime. As x is much smaller, this guarantees #1
-    var a = 2*x*122949823+1;  // This guarantees #2 and #3.
+    var a = 2*x+1;  // This guarantees #2 and #3.
     return (a*v+c) % m;
 }
 
 /**
  * Generate a random shim permutation.
  *
- *  @param x    Number of shims per shim unit.
- *  @param y    Number of shim units/slots per piece.
+ *  @param index    Index of piece to generate.
+ *  @param c        LCG increment value.
+ *  @param x        Number of shims per shim unit.
+ *  @param y        Number of shim units/slots per piece.
  *
  *  @return serial number.
  */
-function generatePermutation(index, seed, x, y) {
+function generatePermutation(index, c, x, y) {
+    var max = Math.pow(x, y);
+
+    // Generate LCG increment 
     // Generate pseudorandom value in [0, 2*max) by calling LCG with sequence
     // number XOR'd by random seed.
-    var r = lcg(Math.abs(index^seed), x, y);
+    var r = lcg(index, c, x, y);
     
     // Sign.
     var sign;
-    var max = Math.pow(x, y);
     if (r < max) {
         // Negative / downward.
         sign = "-";
     } else {
         // Positive / upward.
         sign = "+";
-        r /= 2;
+        r -= max;
     }
     
     // Digits.
     var digits = "";
     for (var i = 0; i < y; i++) {
         digits += String.fromCharCode(65 + (r % x));
-        r /= x;
+        r = Math.floor(r/x);
     }
     
     return sign + digits;
+}
+
+/**
+ * Test function validating the LCG-based permutation generator.
+ *
+ *  Avoid calling with too large values!!!
+ *
+ *  @param x        Number of shims per shim unit.
+ *  @param y        Number of shim units/slots per piece.
+ *  @param seed     Seed used to generate LCG increment value.
+ */
+function testUnicity(x, y, seed) {
+    var c = lcg_increment(seed);
+    var max = 2*Math.pow(x,y);
+    var values = Object();
+    var dup = Object();
+    for (var i = 0; i < max; i++) {
+        var key = generatePermutation(i, c, x, y);
+        if (typeof(values[key]) === 'undefined') {
+            values[key] = [i];
+        } else {
+            values[key].push(i);
+            dup[key] = values[key];
+        }
+    }
+    return dup;
 }
 
 /**
@@ -111,7 +171,8 @@ function project(c, p, y) {
 /**
  * Compute a piece from its serial number.
  *
- *  @param sn   The piece serial number.
+ *  @param sn       The piece serial number.
+ *  @param crop     Cropped mode.
  *
  *  @return The piece object.
  */
@@ -228,7 +289,7 @@ function computePiece(sn, crop) {
     //
     
     var x=0, y=0, x2=0, y2=0;
-    for (var iSlot = 1; iSlot < slots.length; iSlot++) {
+    for (var iSlot = 0; iSlot < slots.length; iSlot++) {
         var slot = slots[iSlot];
         for (var iShim = 0; iShim < slot.shims.length; iShim++) {
             var shim = slot.shims[iShim];
@@ -318,8 +379,6 @@ function piecesToPDF(crop, orient, format, cols, rows) {
     var margin = 15;
     var padding = 10;
     
-    // @TODO room for S/N label
-    
     // Compute scaling and actual number of rows/cols.
     var availWidth = pdf.internal.pageSize.width - margin*2 - padding*(cols-1);
     var availHeight = pdf.internal.pageSize.height - margin*2 - padding*(rows-1);
@@ -356,7 +415,7 @@ function piecesToPDF(crop, orient, format, cols, rows) {
         pdf.offx = margin + (w + padding) * col;
         pdf.offy = margin + (h + padding) * row;
         
-        var sn = generatePermutation(i, seed, x, y)
+        var sn = generatePermutation(i, c, x, y)
         drawPDF(computePiece(sn, crop), pdf);
         pdf.text(pdf.offx, pdf.offy - 1, sn);
         return (++nb >= nbPrint);
@@ -387,9 +446,6 @@ function piecesToPDF(crop, orient, format, cols, rows) {
  *
  */
 
-/** Maximum integer value. */
-var MAX_INT = Math.pow(2,53);
-
 /** Handles. */
 var x, y;
 
@@ -401,6 +457,9 @@ var nbPieces;
 
 /** Permutation seed. */
 var seed;
+
+/** LCG increment value generated from seed. */
+var c;
 
 /** Columns and rows to display. */
 var columns, rows;
@@ -470,10 +529,14 @@ function generatePieces() {
     // Get/generate seed.
     if ($("#random").prop('checked')) {
         // Generate random seed.
-        seed = Math.floor(Math.random() * 0x7FFFFFFF);
+        seed = Math.floor(Math.random() * (MAX_SEED+1));
         $("#seed").val(seed);
     }
     seed = parseInt($("#seed").val());
+    seed %= (MAX_SEED+1);
+    
+    // LCG increment value.
+    c = lcg_increment(seed);
     
     // Set default selection state.
     defaultSelected = true;
@@ -604,7 +667,7 @@ function displayPieces(page) {
         piece += "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg><br/>";
         piece += "</label>";
         piece += "<div class='input-group input-group-sm'>";
-        piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, seed, x, y) + "' size='" + y + "'/>";
+        piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, c, x, y) + "' size='" + y + "'/>";
         piece += "<span class='input-group-btn'><button type='button' class='btn btn-default' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'><span class='glyphicon glyphicon-download'></span> SVG</button></span>"
         piece += "</div>";
         piece += "</div>";
