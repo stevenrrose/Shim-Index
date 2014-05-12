@@ -338,26 +338,28 @@ function drawSVG(piece) {
  *
  *  @param piece        The piece data.
  *  @param pdf          jsPDF document.
+ *  @param scale        Scaling factor.
+ *  @param offx, offy   Position of top-left corner.
  */
-function drawPDF(piece, pdf) {
+function drawPDF(piece, pdf, scale, offx, offy) {
     // Line width. Use same for shims and bbox.
-    pdf.setLineWidth("0.05"*pdf.scale);
+    pdf.setLineWidth(0.05*scale);
     
     for (var iSlot = 0; iSlot < piece.slots.length; iSlot++) {
         var slot = piece.slots[iSlot];
         for (var iShim = 0; iShim < slot.shims.length; iShim++) {
             var shim = slot.shims[iShim];
             pdf.triangle(
-                shim[0].x*pdf.scale+pdf.offx, shim[0].y*pdf.scale+pdf.offy,
-                shim[1].x*pdf.scale+pdf.offx, shim[1].y*pdf.scale+pdf.offy,
-                shim[2].x*pdf.scale+pdf.offx, shim[2].y*pdf.scale+pdf.offy,
+                shim[0].x*scale+offx, shim[0].y*scale+offy,
+                shim[1].x*scale+offx, shim[1].y*scale+offy,
+                shim[2].x*scale+offx, shim[2].y*scale+offy,
                 'D'
             );
         }
     }
     pdf.rect(
-        piece.bbox.x*pdf.scale+pdf.offx, piece.bbox.y*pdf.scale+pdf.offy, 
-        (piece.bbox.x2-piece.bbox.x)*pdf.scale, (piece.bbox.y2-piece.bbox.y)*pdf.scale, 
+        piece.bbox.x*scale+offx, piece.bbox.y*scale+offy, 
+        (piece.bbox.x2-piece.bbox.x)*scale, (piece.bbox.y2-piece.bbox.y)*scale, 
         'D'
     );
 }
@@ -365,15 +367,21 @@ function drawPDF(piece, pdf) {
 /**
  * Generate a multi-page PDF from a set of pieces.
  *
- *  @param crop     Cropped output.
- *  @param orient   Orientation ('portrait', 'landscape').
- *  @param format   Page format ('a3', 'a4','a5' ,'letter' ,'legal').
- *  @param cols     Minimum number of columns per page.
- *  @param rows     Minimum number of rows per page.
+ *  @param crop             Cropped output.
+ *  @param orient           Orientation ('portrait', 'landscape').
+ *  @param format           Page format ('a3', 'a4','a5' ,'letter' ,'legal').
+ *  @param cols             Minimum number of columns per page.
+ *  @param rows             Minimum number of rows per page.
+ *  @param maxPieces        Maximum overall number of pieces to print.
+ *  @param maxPiecesPerDoc  Maximum number of pieces per document.
+ *  @param maxPagesPerDoc   Maximum number of pages per document.
+ *  @param onprogress       Progress callback, called with args (nb, nbPrint, page, nbPages, doc, nbDocs).
+ *  @param onfinish         Finish callback.
  */
-function piecesToPDF(crop, orient, format, cols, rows) {
+function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDoc, maxPagesPerDoc, onprogress, onfinish) {
     // Create jsPDF object.
     var pdf = new jsPDF(orient, 'mm', format);
+    pdf.setFontSize(10);
     
     // Scale and margin.
     var margin = 15;
@@ -390,15 +398,22 @@ function piecesToPDF(crop, orient, format, cols, rows) {
     cols = Math.floor((pdf.internal.pageSize.width - margin*2 + padding) / (w + padding));
     rows = Math.floor((pdf.internal.pageSize.height - margin*2 + padding) / (h + padding));
     
-    // Max number of pieces to output. // @TODO add settings
-    var nbPrint = Math.min(nbSelected, 10000);
+    var nbPiecesPerPage = cols*rows;
     
-    //TODO use background scripts for UI update.
+    // Actual number of pieces.
+    var nbPrint = Math.min(nbSelected, maxPieces);
+    
+    // Actual number of pages per document.
+    var nbPagesPerDoc = Math.min(Math.ceil(maxPiecesPerDoc/nbPiecesPerPage), maxPagesPerDoc);
+    
+    // Actual number of pages overall.
+    var nbPages = Math.ceil(nbPrint/nbPiecesPerPage);
+    
+    // Actual number of docs.
+    var nbDocs = Math.ceil(nbPages/nbPagesPerDoc);
     
     // Draw each piece.
-    pdf.scale = scale;
-    pdf.setFontSize(10);
-    var col=0, row=0, nb = 0;
+    var col=0, row=0, nb = 0, page=1, firstPage=1, doc=1;
     var draw = function(i) {
         // Next column.
         if (nb > 0 && ++col >= cols) {
@@ -407,36 +422,69 @@ function piecesToPDF(crop, orient, format, cols, rows) {
             if (++row >= rows) {
                 // Next page.
                 row = 0;
-                pdf.addPage();
-                progress(nb/nbPrint);
+                if ((page % nbPagesPerDoc) == 0) {
+                    save();
+                    pdf = new jsPDF(orient, 'mm', format);
+                    pdf.setFontSize(10);
+                    page++;
+                    firstPage = page;
+                } else {
+                    pdf.addPage();
+                    page++;
+                }
             }
         }
         
-        pdf.offx = margin + (w + padding) * col;
-        pdf.offy = margin + (h + padding) * row;
+        var offx = margin + (w + padding) * col;
+        var offy = margin + (h + padding) * row;
         
         var sn = generatePermutation(i, c, x, y)
-        drawPDF(computePiece(sn, crop), pdf);
-        pdf.text(pdf.offx, pdf.offy - 1, sn);
-        return (++nb >= nbPrint);
+        drawPDF(computePiece(sn, crop), pdf, scale, offx, offy);
+        pdf.text(offx, offy - 1, sn);
+        nb++;
     }
-    //@TODO progress bar.
-    var i;
-    if (defaultSelected) {
-        // All pieces but toggled ones.
-        for (i = 0; i < nbPieces; i++) {
-            if (pieceToggle[i]) continue;
-            if (draw(i)) break;
-        }
-    } else {
-        // Only toggled pieces
-        for (i in pieceToggle) {
-            if (draw(parseInt(i))) break;
-        }
+    var save = function() {
+        // pdf.output("save", x+"-"+y+"-"+seed+"."+firstPage+"-"+page+".pdf");
+        saveAs(new Blob([pdf.output()], {type: 'application/pdf'}), x+"-"+y+"-"+seed+"."+firstPage+"-"+page+".pdf");
+        onprogress(nb, nbPrint, page, nbPages, doc, nbDocs);
+        doc++;
     }
     
-    // Save file.
-    pdf.output("save", x+"-"+y+"-"+seed+".pdf");
+    if (defaultSelected) {
+        // All pieces but toggled ones.
+        var i = 0;
+        var step = 100;
+        var drawBg = function() {
+            for (; i < nbPieces; i++) {
+                if (pieceToggle[i]) continue;
+                draw(i);
+
+                if (nb >= nbPrint) {
+                    save();
+                    setTimeout(onfinish, 0);
+                    return;
+                }
+                
+                if ((nb % step) == 0) {
+                    onprogress(nb, nbPrint, page, nbPages, doc, nbDocs);
+                    setTimeout(drawBg, 0);
+                    return;
+                }
+            }
+        }
+        drawBg();
+    } else {
+        // Only toggled pieces
+        for (var i in pieceToggle) {
+            draw(parseInt(i));
+
+            if (nb >= nbPrint) {
+                save();
+                setTimeout(onfinish, 0);
+                return;
+            }
+        }
+    }
 }
 
 
@@ -484,6 +532,24 @@ var nbToggle;
  * Number of selected pieces.
  */
 var nbSelected;
+
+/**
+ * Validation for integer inputs.
+ */
+function validateInteger() {
+    var min = parseInt($(this).attr('min'));
+    var max = parseInt($(this).attr('max'));
+    if (!$.isNumeric(this.value)) {
+        this.value = min;
+    } else {
+        this.value = parseInt(this.value);
+    }
+    if (parseInt(this.value) < min) {
+        this.value = min;
+    } else if (parseInt(this.value) > max) {
+        this.value = max;
+    }
+}
 
 /**
  * Ensure that permutation is not too large. Else disable interface elements.
@@ -798,29 +864,41 @@ function downloadSVG(sn) {
 } 
 
 /**
- * Update progress bar.
+ * Update progress information.
  *
  *  @param ratio    Progress ratio [0,1].
+ *  @param piece    Number of pieces output so far.
+ *  @param nbPieces Total number of pieces.
+ *  @param page     Number of pages output so far.
+ *  @param nbPages  Total number of pages.
+ *  @param doc      Number of documents output so far.
+ *  @param nbDocs   Total number of documents.
  */
-function progress(ratio) {
-    var percent = (ratio*100).toFixed(0);
-    $("#progress .progress-bar").attr('aria-valuenow', percent).attr('style','width:'+percent+'%').find("span").html(percent+"%");
+function progress(piece, nbPieces, page, nbPages, doc, nbDocs) {
+    // console.log("progress", piece, nbPieces, page, nbPages, doc, nbDocs)
+    var percent = (piece/nbPieces)*100;
+    $("#progress .progress-bar").attr('aria-valuenow', percent).attr('style','width:'+percent.toFixed(2)+'%').find("span").html(percent.toFixed(0) + "%)");
+    $("#progressPiece").html("Piece " + piece + "/" + nbPieces);
+    $("#progressPage").html("Page " + page + "/" + nbPages);
+    $("#progressDoc").html("Document " + doc + "/" + nbDocs);
 }
 
 /**
  * Output pieces to PDF.
  */
 function downloadPDF() {
-    var $progress = $("#progress");
-    $progress.removeClass("hidden");
-    
+    $("#printDialog").modal('hide');
+    $("#progressDialog").modal('show');
     piecesToPDF(
         $("#cropped").prop('checked'),
         $("[name='orient']:checked").val(), 
         $("[name='format']:checked").val(),
         $("#printColumns").val(),
-        $("#printRows").val()
+        $("#printRows").val(),
+        $("#maxPieces").val(),
+        $("#maxPiecesPerDoc").val(),
+        $("#maxPagesPerDoc").val(),
+        progress,
+        function() {$("#progressDialog").modal('hide');}
     );
-    
-    $progress.addClass("hidden");
 }
