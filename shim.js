@@ -85,9 +85,8 @@ function lcg(v, c, x, y) {
 function generatePermutation(index, c, x, y) {
     var max = Math.pow(x, y);
 
-    // Generate LCG increment 
     // Generate pseudorandom value in [0, 2*max) by calling LCG with sequence
-    // number XOR'd by random seed.
+    // number using the previously computed increment value.
     var r = lcg(index, c, x, y);
     
     // Sign.
@@ -123,10 +122,10 @@ function generatePermutation(index, c, x, y) {
 function testUnicity(x, y, seed) {
     var c = lcg_increment(seed);
     var max = 2*Math.pow(x,y);
-    var values = Object();
-    var dup = Object();
+    var values = Array();
+    var dup = Array();
     for (var i = 0; i < max; i++) {
-        var key = generatePermutation(i, c, x, y);
+        var key = lcg(i, c, x, y);
         if (typeof(values[key]) === 'undefined') {
             values[key] = [i];
         } else {
@@ -134,7 +133,7 @@ function testUnicity(x, y, seed) {
             dup[key] = values[key];
         }
     }
-    return dup;
+    return {dup: dup, total: Object.keys(values).length};
 }
 
 /**
@@ -475,6 +474,7 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
         drawBg();
     } else {
         // Only toggled pieces
+        // Note: no progress here, we expect the number of pieces to be small.
         for (var i in pieceToggle) {
             draw(parseInt(i));
 
@@ -497,7 +497,7 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
 /** Handles. */
 var x, y;
 
-/** Maximum piece width. */
+/** Maximum theoretical piece width. */
 var maxWidth;
 
 /** Number of generated pieces. */
@@ -528,13 +528,16 @@ var pieceToggle;
  *  may switch between vector and object for sparse array storage. */
 var nbToggle;
 
-/**
- * Number of selected pieces.
- */
+/** Number of selected pieces. */
 var nbSelected;
 
 /**
- * Validation for integer inputs.
+ * Validation for integer inputs. Replace the input value with a reasonable
+ * integer:
+ *
+ *  - non-numeric strings are replaced by the min value.
+ *  - floating point strings are rounded toward zero.
+ *  - final value is kept between min and max.
  */
 function validateInteger() {
     var min = parseInt($(this).attr('min'));
@@ -553,8 +556,7 @@ function validateInteger() {
 
 /**
  * Ensure that permutation is not too large. Else disable interface elements.
- */
- 
+ */ 
 function validatePermutationSize() {
     var x = parseInt($("#x").val());
     var y = parseInt($("#y").val());
@@ -574,7 +576,6 @@ function validatePermutationSize() {
 /**
  * Generate a new set of pieces.
  */
-
 function generatePieces() {
     $("#print").prop('disabled', false);
 
@@ -864,7 +865,7 @@ function downloadSVG(sn) {
 } 
 
 /**
- * Update progress information.
+ * Update progress information during PDF output.
  *
  *  @param ratio    Progress ratio [0,1].
  *  @param piece    Number of pieces output so far.
