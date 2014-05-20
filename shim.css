@@ -46,3 +46,10 @@
     font-size: smaller;
     font-style:italic;
 }
+
+/* Disable animation of progress bar as it disrupts the update during 
+ * background processing. */
+.progress-bar {
+    -webkit-transition: none;
+    transition: none;
+}

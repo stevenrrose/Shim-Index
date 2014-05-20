@@ -308,11 +308,13 @@ function computePiece(sn, crop) {
  * Output a piece as SVG.
  *
  *  @param piece        The piece data.
+ *  @param element      DOM element for output (optional).
  *
  *  @return Snap object.
  */
-function drawSVG(piece) {
-    var svg = Snap();
+function drawSVG(piece, element) {
+    var svg = Snap(element);
+    svg.clear();
     for (var iSlot = 0; iSlot < piece.slots.length; iSlot++) {
         var slot = piece.slots[iSlot];
         for (var iShim = 0; iShim < slot.shims.length; iShim++) {
@@ -366,9 +368,10 @@ function drawPDF(piece, pdf, scale, offx, offy) {
 /**
  * Generate a multi-page PDF from a set of pieces.
  *
- *  @param crop             Cropped output.
+ *  @param cropped          Cropped output.
  *  @param orient           Orientation ('portrait', 'landscape').
  *  @param format           Page format ('a3', 'a4','a5' ,'letter' ,'legal').
+ *  @param labelPos         Piece S/N label position ('none', 'top','bottom').
  *  @param cols             Minimum number of columns per page.
  *  @param rows             Minimum number of rows per page.
  *  @param maxPieces        Maximum overall number of pieces to print.
@@ -377,14 +380,16 @@ function drawPDF(piece, pdf, scale, offx, offy) {
  *  @param onprogress       Progress callback, called with args (nb, nbPrint, page, nbPages, doc, nbDocs).
  *  @param onfinish         Finish callback.
  */
-function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDoc, maxPagesPerDoc, onprogress, onfinish) {
+function piecesToPDF(cropped, orient, format, labelPos, cols, rows, maxPieces, maxPiecesPerDoc, maxPagesPerDoc, onprogress, onfinish) {
+    // Various sizes.
+    var fontSizePt = 10; /* pt */
+    var fontSizeMm = fontSizePt * 0.352778;
+    var margin = 15; /* mm */
+    var padding = 10; /* mm */
+    
     // Create jsPDF object.
     var pdf = new jsPDF(orient, 'mm', format);
-    pdf.setFontSize(10);
-    
-    // Scale and margin.
-    var margin = 15;
-    var padding = 10;
+    pdf.setFontSize(fontSizePt);
     
     // Compute scaling and actual number of rows/cols.
     var availWidth = pdf.internal.pageSize.width - margin*2 - padding*(cols-1);
@@ -412,7 +417,7 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
     var nbDocs = Math.ceil(nbPages/nbPagesPerDoc);
     
     // Draw each piece.
-    var col=0, row=0, nb = 0, page=1, firstPage=1, doc=1;
+    var col = 0, row = 0, nb = 0, page = 1, firstPage = 1, doc = 1;
     var draw = function(i) {
         // Next column.
         if (nb > 0 && ++col >= cols) {
@@ -422,9 +427,10 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
                 // Next page.
                 row = 0;
                 if ((page % nbPagesPerDoc) == 0) {
+                    // Next doc.
                     save();
                     pdf = new jsPDF(orient, 'mm', format);
-                    pdf.setFontSize(10);
+                    pdf.setFontSize(fontSizePt);
                     page++;
                     firstPage = page;
                 } else {
@@ -434,16 +440,27 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
             }
         }
         
+        // Compute offset in gridded layout.
         var offx = margin + (w + padding) * col;
         var offy = margin + (h + padding) * row;
         
+        // Output piece at the right place.
         var sn = generatePermutation(i, c, x, y)
-        drawPDF(computePiece(sn, crop), pdf, scale, offx, offy);
-        pdf.text(offx, offy - 1, sn);
+        drawPDF(computePiece(sn, cropped), pdf, scale, offx, offy);
+        
+        // Output label.
+        switch (labelPos) {
+            case 'top':
+                pdf.text(offx, offy - 1, sn);
+                break;
+            case 'bottom':
+                pdf.text(offx, offy + h + fontSizeMm, sn);
+                break;
+        }
         nb++;
     }
     var save = function() {
-        // pdf.output("save", x+"-"+y+"-"+seed+"."+firstPage+"-"+page+".pdf");
+        // Save current PDF document.
         saveAs(new Blob([pdf.output()], {type: 'application/pdf'}), x+"-"+y+"-"+seed+"."+firstPage+"-"+page+".pdf");
         onprogress(nb, nbPrint, page, nbPages, doc, nbDocs);
         doc++;
@@ -467,7 +484,8 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
                 if ((nb % step) == 0) {
                     onprogress(nb, nbPrint, page, nbPages, doc, nbDocs);
                     setTimeout(drawBg, 0);
-                    return;
+                    i++;
+                    break;
                 }
             }
         }
@@ -479,6 +497,98 @@ function piecesToPDF(crop, orient, format, cols, rows, maxPieces, maxPiecesPerDo
             draw(parseInt(i));
 
             if (nb >= nbPrint) {
+                save();
+                setTimeout(onfinish, 0);
+                return;
+            }
+        }
+    }
+}
+
+/**
+ * Generate a Zip archive of SVG files from a set of pieces.
+ *
+ *  @param cropped          Cropped output.
+ *  @param maxPieces        Maximum overall number of pieces to export.
+ *  @param maxPiecesPerZip  Maximum number of pieces per Zip file.
+ *  @param onprogress       Progress callback, called with args (nb, nbPrint, page, nbPages, doc, nbDocs).
+ *  @param onfinish         Finish callback.
+ */
+function piecesToZip(cropped, maxPieces, maxPiecesPerZip, onprogress, onfinish) {
+    // Create JSZip object.
+    var zip = new JSZip();
+    
+    // Actual number of pieces.
+    var nbSvg = Math.min(nbSelected, maxPieces);
+    
+    // Actual number of Zip files.
+    var nbFiles = Math.ceil(nbSvg/maxPiecesPerZip);
+    
+    // Output each piece as SVG file.
+    var svgTmp = $("#tmpSvg svg")[0];
+    var nb = 0, file = 1;
+    var generateSvg = function(i) {
+        if (nb > 0 && (nb % maxPiecesPerZip) == 0) {
+            // Next file.
+            save();
+            zip = new JSZip();
+        }
+        
+        // Generate SVG from piece.
+        var sn = generatePermutation(i, c, x, y)
+        var piece = computePiece(sn, cropped);
+        var svg = drawSVG(piece, svgTmp);
+        svg.attr('viewBox', 
+            piece.bbox.x 
+            + " " + piece.bbox.y 
+            + " " 
+            + (piece.bbox.x2-piece.bbox.x) 
+            + " " 
+            + (piece.bbox.y2-piece.bbox.y)
+        );
+        svg.attr({fill: 'none', stroke: 'black', strokeWidth: 0.1});
+        
+        // Add SVG to Zip file.
+        zip.file(sn + ".svg", svg.outerSVG());
+        nb++;
+    }
+    var save = function() {
+        saveAs(zip.generate({type: 'blob', compression: 'DEFLATE'}), x+"-"+y+"-"+seed+((nbFiles > 1) ? "."+file : "")+".zip");
+        onprogress(nb, nbSvg, undefined, undefined, file, nbFiles);
+        file++;
+    }
+    
+    if (defaultSelected) {
+        // All pieces but toggled ones.
+        var i = 0;
+        var step = 100;
+        var generateBg = function() {
+            for (; i < nbPieces; i++) {
+                if (pieceToggle[i]) continue;
+                generateSvg(i);
+
+                if (nb >= nbSvg) {
+                    save();
+                    setTimeout(onfinish, 0);
+                    return;
+                }
+                
+                if ((nb % step) == 0) {
+                    onprogress(nb, nbSvg, undefined, undefined, file, nbFiles);
+                    setTimeout(generateBg, 0);
+                    i++;
+                    break;
+                }
+            }
+        }
+        generateBg();
+    } else {
+        // Only toggled pieces
+        // Note: no progress here, we expect the number of pieces to be small.
+        for (var i in pieceToggle) {
+            generateSvg(parseInt(i));
+
+            if (nb >= nbSvg) {
                 save();
                 setTimeout(onfinish, 0);
                 return;
@@ -577,6 +687,7 @@ function validatePermutationSize() {
  * Generate a new set of pieces.
  */
 function generatePieces() {
+    $("#zip").prop('disabled', false);
     $("#print").prop('disabled', false);
 
     // Get algorithm handles.
@@ -770,7 +881,7 @@ function updatePiece(element) {
     var piece = computePiece(sn, cropped);
     
     // Output to SVG.
-    var svg = drawSVG(piece);
+    var svg = drawSVG(piece, $(element).find("svg")[0]);
     
     // Adjust viewbox so that all pieces are centered and use the same scale.
     svg.attr('viewBox', 
@@ -778,9 +889,6 @@ function updatePiece(element) {
         + " "
         + ((piece.bbox.y2-piece.bbox.y)-shimRatio)/2
         + " " + maxWidth + " " + shimRatio);
-
-    // Insert into DOM.
-    $(element).find("svg").replaceWith(svg.node);
 }
 
 /**
@@ -833,6 +941,7 @@ function updateSelected() {
     nbSelected = (defaultSelected ? nbPieces - nbToggle : nbToggle);
     $("#totalPieces").html(nbPieces);
     $("#selectedPieces").html(nbSelected);
+    $("#zip").prop('disabled', (nbSelected == 0));
     $("#print").prop('disabled', (nbSelected == 0));
 }
 
@@ -847,7 +956,7 @@ function downloadSVG(sn) {
     var piece = computePiece(sn, cropped);
     
     // Output to SVG.
-    var svg = drawSVG(piece);
+    var svg = drawSVG(piece, $("#tmpSvg svg")[0]);
     svg.attr('viewBox', 
         piece.bbox.x 
         + " " + piece.bbox.y 
@@ -857,7 +966,6 @@ function downloadSVG(sn) {
         + (piece.bbox.y2-piece.bbox.y)
     );
     svg.attr({fill: 'none', stroke: 'black', strokeWidth: 0.1});
-    svg.node.parentElement.removeChild(svg.node);
 
     blob = new Blob([svg.outerSVG()], {type: "image/svg+xml"});
     saveAs(blob, sn + ".svg");
@@ -869,19 +977,20 @@ function downloadSVG(sn) {
  *
  *  @param ratio    Progress ratio [0,1].
  *  @param piece    Number of pieces output so far.
- *  @param nbPieces Total number of pieces.
- *  @param page     Number of pages output so far.
- *  @param nbPages  Total number of pages.
- *  @param doc      Number of documents output so far.
- *  @param nbDocs   Total number of documents.
+ *  @param nbPieces Total number of pieces (optional).
+ *  @param page     Number of pages output so far (optional).
+ *  @param nbPages  Total number of pages (optional).
+ *  @param doc      Number of documents output so far (optional).
+ *  @param nbDocs   Total number of documents (optional).
  */
 function progress(piece, nbPieces, page, nbPages, doc, nbDocs) {
-    // console.log("progress", piece, nbPieces, page, nbPages, doc, nbDocs)
     var percent = (piece/nbPieces)*100;
+    // console.log("progress", piece, nbPieces, page, nbPages, doc, nbDocs)
+    // console.log("percent", percent);
     $("#progress .progress-bar").attr('aria-valuenow', percent).attr('style','width:'+percent.toFixed(2)+'%').find("span").html(percent.toFixed(0) + "%)");
     $("#progressPiece").html("Piece " + piece + "/" + nbPieces);
-    $("#progressPage").html("Page " + page + "/" + nbPages);
-    $("#progressDoc").html("Document " + doc + "/" + nbDocs);
+    $("#progressPage").html((page && nbPages) ? "Page " + page + "/" + nbPages : "");
+    $("#progressDoc").html((doc && nbDocs) ? "Document " + doc + "/" + nbDocs : "");
 }
 
 /**
@@ -894,11 +1003,27 @@ function downloadPDF() {
         $("#cropped").prop('checked'),
         $("[name='orient']:checked").val(), 
         $("[name='format']:checked").val(),
+        $("[name='labelPos']:checked").val(),
         $("#printColumns").val(),
         $("#printRows").val(),
         $("#maxPieces").val(),
         $("#maxPiecesPerDoc").val(),
         $("#maxPagesPerDoc").val(),
+        progress,
+        function() {$("#progressDialog").modal('hide');}
+    );
+}
+
+/**
+ * Output pieces to zipped SVG.
+ */
+function downloadZip() {
+    $("#zipDialog").modal('hide');
+    $("#progressDialog").modal('show');
+    piecesToZip(
+        $("#cropped").prop('checked'),
+        $("#maxZip").val(),
+        $("#maxPiecesPerZip").val(),
         progress,
         function() {$("#progressDialog").modal('hide');}
     );
