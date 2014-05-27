@@ -30,10 +30,10 @@
     height: 100%;
     border: 1px solid black;
 }
-#cropped {
+#cropped, #trapezoidal {
     display: none;
 }
-#cropped-label {
+#cropped-label, #trapezoidal-label {
     font-style: italic;
 }
 #pager .pagination {

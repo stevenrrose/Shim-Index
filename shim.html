@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -135,6 +134,8 @@
                 <button type="button" class="btn btn-default" onclick="checkAll(false)"><span class="glyphicon glyphicon-remove-circle"></span> Clear all</button>
                 <input type="checkbox" id="cropped" onchange="updatePieces()"/>
                 <label for="cropped" id="cropped-label" class="btn btn-default" data-toggle="button" data-cropped-text="Cropped">Uncropped</label>
+                <input type="checkbox" id="trapezoidal" onchange="updatePieces()"/>
+                <label for="trapezoidal" id="trapezoidal-label" class="btn btn-default" data-toggle="button" data-trapezoidal-text="4-sided">3-sided</label>
             </div>
             <script>
             $("#cropped-label").click(function() {
@@ -142,6 +143,12 @@
             });
             $("#cropped").change(function() {
                 $("#cropped-label").button(this.checked?"cropped":'reset');
+            });
+            $("#trapezoidal-label").click(function() {
+                $("#trapezoidal").click();
+            });
+            $("#trapezoidal").change(function() {
+                $("#trapezoidal-label").button(this.checked?"trapezoidal":'reset');
             });
             </script>
             <div id="pager" class="btn-group"></div>
@@ -352,3 +359,4 @@
         $("input[type='number']").change(validateInteger);
     </script>
 </body>
+</html>
