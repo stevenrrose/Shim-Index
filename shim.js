@@ -486,9 +486,9 @@ function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
     var availHeight = pdf.internal.pageSize.height - margin*2 - padding*(printOptions.rows-1);
     var w = availWidth / printOptions.cols;
     var h = availHeight / printOptions.rows;
-    var scale = Math.min(w/maxWidth, h/side);
+    var scale = Math.min(w/maxWidth, h/maxHeight);
     w = maxWidth*scale;
-    h = side*scale;
+    h = maxHeight*scale;
     printOptions.cols = Math.floor((pdf.internal.pageSize.width - margin*2 + padding) / (w + padding));
     printOptions.rows = Math.floor((pdf.internal.pageSize.height - margin*2 + padding) / (h + padding));
     
@@ -699,8 +699,8 @@ function piecesToZip(pieceOptions, limits, onprogress, onfinish) {
 /** Handles. */
 var x, y;
 
-/** Maximum theoretical piece width. */
-var maxWidtht;
+/** Maximum theoretical piece width/height. */
+var maxWidth, maxHeight;
 
 /** Number of generated pieces. */
 var nbPieces;
@@ -793,8 +793,9 @@ function generatePieces() {
         nbPieces = 2*Math.pow(x,y);
     }
     
-    // Maximum theoretical piece width.
-    maxWidth = Math.ceil(y/2)*x + negativeSpace*(y-1);
+    // Maximum theoretical piece width/height.
+    maxWidth = Math.ceil(y/2)*x + (negativeSpace+tip)*(y-1);
+    maxHeight = side+tip;
 
     // Get/generate seed.
     if ($("#random").prop('checked')) {
@@ -978,22 +979,11 @@ function updatePiece(element) {
     var svg = drawSVG(piece, $(element).find("svg")[0]);
     
     // Adjust viewbox so that all pieces are centered and use the same scale.
-    //FIXME
-    /*
     svg.attr('viewBox', 
         ((piece.bbox.x2-piece.bbox.x)-maxWidth)/2
         + " "
-        + ((piece.bbox.y2-piece.bbox.y)-side)/2
-        + " " + maxWidth + " " + side);
-        */  
-    svg.attr('viewBox', 
-        piece.bbox.x 
-        + " " + piece.bbox.y 
-        + " " 
-        + (piece.bbox.x2-piece.bbox.x) 
-        + " " 
-        + (piece.bbox.y2-piece.bbox.y)
-    );
+        + ((piece.bbox.y2-piece.bbox.y)-maxHeight)/2
+        + " " + maxWidth + " " + maxHeight);
 }
 
 /**
