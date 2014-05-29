@@ -4,9 +4,6 @@
  *
  */
 
-/** Maximum integer value. */
-var MAX_INT = Math.pow(2,53);
-
 /** Maximum seed value. */
 var MAX_SEED = 999999;
 
@@ -245,10 +242,10 @@ function computePiece(sn, options) {
     var height;
     if (options.cropped) {
         // Height = min inner height of all pieces.
-        height = +Infinity;
+        height = Number.POSITIVE_INFINITY;
         for (var iSlot = 0; iSlot < slots.length; iSlot++) {
             var slot = slots[iSlot];
-            var maxTip = -Infinity, minBase = +Infinity;
+            var maxTip = Number.NEGATIVE_INFINITY, minBase = Number.POSITIVE_INFINITY;
             for (var iShim = 0; iShim < slot.shims.length; iShim++) {
                 var shim = slot.shims[iShim];
                 maxTip = Math.max(maxTip, shim[0].y * slot.upward);
@@ -270,7 +267,7 @@ function computePiece(sn, options) {
         height = 0;
         for (var iSlot = 0; iSlot < slots.length; iSlot++) {
             var slot = slots[iSlot];
-            var minY = +Infinity, maxY = -Infinity;
+            var minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
             for (var iShim = 0; iShim < slot.shims.length; iShim++) {
                 var shim = slot.shims[iShim];
                 for (var i = 0; i < shim.length; i++) {
@@ -279,8 +276,6 @@ function computePiece(sn, options) {
                 }
             }
             height = Math.max(height, maxY-minY);
-            
-            console.log(iSlot, minY, maxY);
             
             // Shift piece to align outermost tip with zero.
             for (var iShim = 0; iShim < slot.shims.length; iShim++) {
@@ -409,7 +404,6 @@ function drawSVG(piece, element) {
         piece.bbox.x2-piece.bbox.x,
         piece.bbox.y2-piece.bbox.y
     ).attr('class', "bbox");
-    console.log(piece.bbox);
     return svg;
 }
 
@@ -460,9 +454,16 @@ function drawPDF(piece, pdf, scale, offx, offy) {
  *  @param printOptions     Print options:
  *                          - orient    Orientation ('portrait', 'landscape').
  *                          - format    Page format ('a3', 'a4','a5' ,'letter' ,'legal').
- *                          - labelPos  Piece S/N label position ('none', 'top','bottom').
+ *                          - sides     Print mode ('single', 'double')
+ *                          - margins   Margins in unit values {top, bottom, left, right}
+ *                          - padding   Padding between pieces in unit values
+ *                          - unit      Base measurement unit ('mm', 'cm', 'in', 'pt')
+ *                          - justif    Justification ('left', 'center', 'right')
  *                          - cols      Minimum number of columns per page.
  *                          - rows      Minimum number of rows per page.
+ *                          - seedPos   Seed number position ('none', 'header','footer').
+ *                          - pagePos   Page number position ('none', 'header','footer').
+ *                          - labelPos  Piece S/N label position ('none', 'top','bottom').
  *  @param limits           Output limits:
  *                          - maxPieces        Maximum overall number of pieces to print.
  *                          - maxPiecesPerDoc  Maximum number of pieces per document.
@@ -472,8 +473,8 @@ function drawPDF(piece, pdf, scale, offx, offy) {
  */
 function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
     // Various sizes.
+    // TODO settings
     var fontSizePt = 10; /* pt */
-    var fontSizeMm = fontSizePt * 0.352778;
     var margin = 15; /* mm */
     var padding = 10; /* mm */
     
@@ -543,9 +544,10 @@ function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
         switch (printOptions.labelPos) {
             case 'top':
                 pdf.text(offx, offy - 1, sn);
+                // TODO alignment pdf.text(offx + pdf.getStringUnitWidth(sn) * fontSizePt / pdf.internal.scaleFactor, offy - 1, "toto");
                 break;
             case 'bottom':
-                pdf.text(offx, offy + h + fontSizeMm, sn);
+                pdf.text(offx, offy + h + fontSizePt / pdf.internal.scaleFactor, sn);
                 break;
         }
         nb++;
@@ -734,26 +736,19 @@ var nbToggle;
 var nbSelected;
 
 /**
- * Validation for integer inputs. Replace the input value with a reasonable
- * integer:
+ * Validation for number inputs. Replace the input value with a reasonable
+ * number:
  *
- *  - non-numeric strings are replaced by the min value.
- *  - floating point strings are rounded toward zero.
+ *  - floating point strings are rounded to the nearest step value toward zero.
  *  - final value is kept between min and max.
+ *  - non-numeric strings are replaced by zero or the min value.
  */
-function validateInteger() {
-    var min = parseInt($(this).attr('min'));
-    var max = parseInt($(this).attr('max'));
-    if (!$.isNumeric(this.value)) {
-        this.value = min;
-    } else {
-        this.value = parseInt(this.value);
-    }
-    if (parseInt(this.value) < min) {
-        this.value = min;
-    } else if (parseInt(this.value) > max) {
-        this.value = max;
-    }
+function validateNumber() {
+    var min = $(this).attr('min'); if (!$.isNumeric(min)) min = Number.NEGATIVE_INFINITY;
+    var max = $(this).attr('max'); if (!$.isNumeric(max)) max = Number.POSITIVE_INFINITY;
+    var step = $(this).attr('step'); if (!$.isNumeric(step)) step = 1;
+    this.value = parseFloat((Math.round(parseFloat(this.value)/step)*step).toPrecision(12));
+    this.value = Math.max(min, Math.min(max, this.value));
 }
 
 /**
@@ -763,7 +758,7 @@ function validatePermutationSize() {
     var x = parseInt($("#x").val());
     var y = parseInt($("#y").val());
     var nbPieces = 2*Math.pow(x,y);
-    if (nbPieces > MAX_INT) {
+    if (nbPieces > Number.MAX_SAFE_INTEGER) {
         // Permutation too large.
         $("#generate").removeClass("btn-default").addClass("btn-danger").prop('disabled', true);
         $("#x, #y").parent().addClass("has-error bg-danger");
@@ -1102,14 +1097,29 @@ function downloadPDF() {
         {
             orient: $("[name='orient']:checked").val(), 
             format: $("[name='format']:checked").val(),
-            labelPos: $("[name='labelPos']:checked").val(),
+            sides: $("[name='sides']:checked").val(),
+
+            margins: {
+                top: $("#marginTop").val(),
+                bottom: $("#marginBottom").val(),
+                left: $("#marginLeft").val(),
+                right: $("#marginRight").val(),
+            },
+            padding: $("#padding").val(),
+            unit: $("#unit").val(),
+            
+            justif: $("[name='justif']:checked").val(),
             cols: $("#printColumns").val(),
-            rows: $("#printRows").val()
+            rows: $("#printRows").val(),
+            
+            seedPos: $("[name='seedPos']:checked").val(),
+            pagePos: $("[name='pagePos']:checked").val(),
+            labelPos: $("[name='labelPos']:checked").val(),
         },
         {
             maxPieces: $("#maxPieces").val(),
             maxPiecesPerDoc: $("#maxPiecesPerDoc").val(),
-            maxPagesPerDoc: $("#maxPagesPerDoc").val()
+            maxPagesPerDoc: $("#maxPagesPerDoc").val(),
         },
         progress,
         function() {$("#progressDialog").modal('hide');}

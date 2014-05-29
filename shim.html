@@ -132,9 +132,9 @@
                 <button type="button" class="btn btn-default" onclick="checkVisible(false)"><span class="glyphicon glyphicon-remove-sign"></span> Clear visible</button>
                 <button type="button" class="btn btn-default" onclick="checkAll(true)"><span class="glyphicon glyphicon-ok-circle"></span> Check all</button>
                 <button type="button" class="btn btn-default" onclick="checkAll(false)"><span class="glyphicon glyphicon-remove-circle"></span> Clear all</button>
-                <input type="checkbox" id="cropped" onchange="updatePieces()"/>
+                <input type="checkbox" id="cropped" class="hidden" onchange="updatePieces()"/>
                 <label for="cropped" id="cropped-label" class="btn btn-default" data-toggle="button" data-cropped-text="Cropped">Uncropped</label>
-                <input type="checkbox" id="trapezoidal" onchange="updatePieces()"/>
+                <input type="checkbox" id="trapezoidal" class="hidden"  onchange="updatePieces()"/>
                 <label for="trapezoidal" id="trapezoidal-label" class="btn btn-default" data-toggle="button" data-trapezoidal-text="4-sided">3-sided</label>
             </div>
             <script>
@@ -209,10 +209,11 @@
                 <!-- Print settings -->
                 <div class="modal-body">
                     <form role="form">
-                        <div class="form-group row">
+                        <fieldset>
+                            <legend>Format</legend>
+                            
                             <!-- Page orientation -->
-                            <label class="col-sm-2 col-md-2 control-label">Orientation</label>
-                            <div class="col-sm-10 col-md-3">
+                            <div class="col-sm-6 col-md-4">                                
                                 <ul class="list-inline">
                                     <li>
                                         <div class="btn-group btn-group-sm" data-toggle="buttons">
@@ -223,18 +224,17 @@
                                                 <input type="radio" name="orient" value="landscape" />Landscape
                                             </label>
                                         </div>
-                                        <p class="help-block">Printed page orientation</p>
                                     </li>
                                 </ul>
+                                <p class="help-block">Page orientation</p>
                             </div>
-                        
+                            
                             <!-- Page format -->
-                            <label class="col-sm-2 col-md-2 control-label">Format</label>
-                            <div class="col-sm-10 col-md-5">
+                            <div class="col-sm-6 col-md-4">                                
                                 <ul class="list-inline">
                                     <li>
                                         <div class="btn-group btn-group-sm" data-toggle="buttons">
-                                            <label class="btn btn-default">
+                                            <label class="btn btn-default ">
                                                 <input type="radio" name="format" value="a3" />A3
                                             </label>
                                             <label class="btn btn-default active">
@@ -250,35 +250,94 @@
                                                 <input type="radio" name="format" value="legal" />Legal
                                             </label>
                                         </div>
-                                        <p class="help-block">Printed page format</p>
                                     </li>
                                 </ul>
+                                <p class="help-block">Page size</p>
                             </div>
-                        
-                            <!-- Piece label -->
-                            <label class="col-sm-2 col-md-2 control-label">Label</label>
-                            <div class="col-sm-10 col-md-3">
+                            
+                            <!-- Single/double sided -->
+                            <div class="col-sm-6 col-md-4">                                
                                 <ul class="list-inline">
                                     <li>
                                         <div class="btn-group btn-group-sm" data-toggle="buttons">
                                             <label class="btn btn-default active">
-                                                <input type="radio" name="labelPos" value="none" checked />None
+                                                <input type="radio" name="sides" value="single" checked />Single-sided
                                             </label>
                                             <label class="btn btn-default">
-                                                <input type="radio" name="labelPos" value="top" />Top
-                                            </label>
-                                            <label class="btn btn-default">
-                                                <input type="radio" name="labelPos" value="bottom" />Bottom
+                                                <input type="radio" name="sides" value="double" />Double-sided
                                             </label>
                                         </div>
-                                        <p class="help-block">Piece S/N label position</p>
+                                    </li>
+                                </ul>
+                                <p class="help-block">Print mode</p>
+                            </div>
+                        </fieldset>
+                            
+                            
+                        <fieldset>
+                            <legend>Margins</legend>
+                            
+                            <!-- Page margins -->
+                            <div class="col-sm-4 col-md-2">                                
+                                <input type="number" class="form-control" id="marginTop" value="10" min="0" step="0.1" />
+                                <p class="help-block">Top</p>
+                            </div>
+                            <div class="col-sm-4 col-md-2">                                
+                                <input type="number" class="form-control" id="marginBottom" value="10" min="0" step="0.1" />  
+                                <p class="help-block">Bottom</p>
+                            </div>
+                            <div class="col-sm-4 col-md-2">                                
+                                <input type="number" class="form-control" id="marginLeft" value="10" min="0" step="0.1" />
+                                <p class="help-block">Left / Inner</p>
+                            </div>
+                            <div class="col-sm-4 col-md-2">                                
+                                <input type="number" class="form-control" id="marginRight" value="10" min="0" step="0.1" />
+                                <p class="help-block">Right / Outer</p>
+                            </div>
+                            
+                            <!-- Padding between pages -->
+                            <div class="col-sm-4 col-md-2">                                
+                                <input type="number" class="form-control" id="padding" value="10" min="0" step="0.1" />
+                                <p class="help-block">Padding</p>
+                            </div>
+                            
+                            <!-- Units -->
+                            <div class="col-sm-4 col-md-2">                                
+                                <select id="unit" class="form-control">
+                                    <option value="mm" selected>mm</option>
+                                    <option value="cm">cm</option>
+                                    <option value="in">in</option>
+                                    <option value="pt">pt</option>
+                                </select>
+                                <p class="help-block">Units</p>
+                            </div>
+                        </fieldset>
+                        
+                        <fieldset>
+                            <legend>Layout</legend>
+                            
+                            <!-- Justification -->
+                            <div class="col-sm-6 col-md-4">
+                                <ul class="list-inline">
+                                    <li>
+                                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                                            <label class="btn btn-default active">
+                                                <input type="radio" name="justif" value="left" checked />Left / Outer
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="justif" value="center" />Center
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="justif" value="right" />Right / Inner
+                                            </label>
+                                        </div>
+                                        <p class="help-block">Justification</p>
                                     </li>
                                 </ul>
                             </div>
                             
                             <!-- Piece layout on pages -->
-                            <label class="col-sm-2 col-md-2 control-label">Tiling</label>
-                            <div class="col-sm-10 col-md-5">
+                            <div class="col-sm-6">
                                 <div class="form-inline">
                                     <select id="printColumns" class="form-control">
                                         <option value="1" selected>1</option>
@@ -298,24 +357,89 @@
                                 </div>
                                 <p class="help-block">Minimum number of columns/rows per page</p>
                             </div>
-                        </div>
+                        </fieldset>
+                        
+                        <!-- Labels -->
+                        <fieldset>
+                            <legend>Labels</legend>
+
+                            <!-- Piece label -->
+                            <div class="col-sm-6 col-md-4">                                
+                                <ul class="list-inline">
+                                    <li>
+                                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                                            <label class="btn btn-default active">
+                                                <input type="radio" name="seedPos" value="none" checked />None
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="seedPos" value="top" />Header
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="seedPos" value="bottom" />Footer
+                                            </label>
+                                        </div>
+                                        <p class="help-block">Seed number position</p>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Piece label -->
+                            <div class="col-sm-6 col-md-4">                                
+                                <ul class="list-inline">
+                                    <li>
+                                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                                            <label class="btn btn-default active">
+                                                <input type="radio" name="pagePos" value="none" checked />None
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="pagePos" value="top" />Header
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="pagePos" value="bottom" />Footer
+                                            </label>
+                                        </div>
+                                        <p class="help-block">Page number position</p>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Piece label -->
+                            <div class="col-sm-6 col-md-4">                                
+                                <ul class="list-inline">
+                                    <li>
+                                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                                            <label class="btn btn-default active">
+                                                <input type="radio" name="labelPos" value="none" checked />None
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="labelPos" value="top" />Top
+                                            </label>
+                                            <label class="btn btn-default">
+                                                <input type="radio" name="labelPos" value="bottom" />Bottom
+                                            </label>
+                                        </div>
+                                        <p class="help-block">Piece S/N label position</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </fieldset>
                         
                         <!-- Limits -->
-                        <div class="form-group row">
-                            <label class="col-sm-2 control-label">Limits</label>
-                            <div class="col-sm-3">
+                        <fieldset>
+                            <legend>Limits</legend>
+                            <div class="col-sm-4">
                                 <input type="number" class="form-control" id="maxPieces" value="100000" min="1" max="1000000" />
                                 <p class="help-block">Maximum overall number of pieces to print</p>
                             </div>
-                            <div class="col-sm-3">
+                            <div class="col-sm-4">
                                 <input type="number" class="form-control" id="maxPiecesPerDoc" value="10000" min="1" max="100000" />
                                 <p class="help-block">Maximum number of pieces per document</p>
                             </div>
-                            <div class="col-sm-3">
+                            <div class="col-sm-4">
                                 <input type="number" class="form-control" id="maxPagesPerDoc" value="500" min="1" max="10000" />
                                 <p class="help-block">Maximum number of pages per document</p>
                             </div>
-                        </div>
+                        </fieldset>
                     </form>
                 </div>
                 
@@ -356,7 +480,7 @@
     
     <script>
         // Add validation for number inputs.
-        $("input[type='number']").change(validateInteger);
+        $("input[type='number']").change(validateNumber);
     </script>
 </body>
 </html>
