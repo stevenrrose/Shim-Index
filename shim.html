@@ -274,7 +274,7 @@
                         </fieldset>
                             
                             
-                        <fieldset>
+                        <fieldset id="margins">
                             <legend>Margins</legend>
                             
                             <!-- Page margins -->
@@ -297,7 +297,7 @@
                             
                             <!-- Padding between pages -->
                             <div class="col-sm-4 col-md-2">                                
-                                <input type="number" class="form-control" id="padding" value="10" min="0" step="0.1" />
+                                <input type="number" class="form-control" id="padding" value="5" min="0" step="0.1" />
                                 <p class="help-block">Padding</p>
                             </div>
                             
@@ -311,6 +311,18 @@
                                 </select>
                                 <p class="help-block">Units</p>
                             </div>
+                            <script>
+                            var currentUnit = 'mm';
+                            var step = {mm: 0.1, cm: 0.01, in: 0.01, pt: 1};        // Step for inputs.
+                            $("#unit").change(function() {
+                                // Convert dimensions & adjust steps.
+                                var oldUnit = currentUnit;
+                                currentUnit = this.value;
+                                $("#margins input[type='number']").each(function() {
+                                    $(this).val($(this).val()*unitPt[oldUnit]/unitPt[currentUnit]).attr('step', step[currentUnit]).change();
+                                });
+                            });
+                            </script>
                         </fieldset>
                         
                         <fieldset>
@@ -322,13 +334,13 @@
                                     <li>
                                         <div class="btn-group btn-group-sm" data-toggle="buttons">
                                             <label class="btn btn-default active">
-                                                <input type="radio" name="justif" value="left" checked />Left / Outer
+                                                <input type="radio" name="justif" value="left" checked />Left / Inner
                                             </label>
                                             <label class="btn btn-default">
                                                 <input type="radio" name="justif" value="center" />Center
                                             </label>
                                             <label class="btn btn-default">
-                                                <input type="radio" name="justif" value="right" />Right / Inner
+                                                <input type="radio" name="justif" value="right" />Right / Outer
                                             </label>
                                         </div>
                                         <p class="help-block">Justification</p>
@@ -369,16 +381,16 @@
                                     <li>
                                         <div class="btn-group btn-group-sm" data-toggle="buttons">
                                             <label class="btn btn-default active">
-                                                <input type="radio" name="seedPos" value="none" checked />None
+                                                <input type="radio" name="compoPos" value="none" checked />None
                                             </label>
                                             <label class="btn btn-default">
-                                                <input type="radio" name="seedPos" value="top" />Header
+                                                <input type="radio" name="compoPos" value="top" />Header
                                             </label>
                                             <label class="btn btn-default">
-                                                <input type="radio" name="seedPos" value="bottom" />Footer
+                                                <input type="radio" name="compoPos" value="bottom" />Footer
                                             </label>
                                         </div>
-                                        <p class="help-block">Seed number position</p>
+                                        <p class="help-block">Composition number position</p>
                                     </li>
                                 </ul>
                             </div>
@@ -389,13 +401,13 @@
                                     <li>
                                         <div class="btn-group btn-group-sm" data-toggle="buttons">
                                             <label class="btn btn-default active">
-                                                <input type="radio" name="pagePos" value="none" checked />None
+                                                <input type="radio" name="pageNbPos" value="none" checked />None
                                             </label>
                                             <label class="btn btn-default">
-                                                <input type="radio" name="pagePos" value="top" />Header
+                                                <input type="radio" name="pageNbPos" value="top" />Header
                                             </label>
                                             <label class="btn btn-default">
-                                                <input type="radio" name="pagePos" value="bottom" />Footer
+                                                <input type="radio" name="pageNbPos" value="bottom" />Footer
                                             </label>
                                         </div>
                                         <p class="help-block">Page number position</p>

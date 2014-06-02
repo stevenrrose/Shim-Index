@@ -4,6 +4,9 @@
  *
  */
 
+/** Unit conversions. */
+var unitPt = {mm: 72/25.4, cm: 72/2.54, in: 72, pt: 1}; // Conversion from point to unit. 1in = 72pt = 25.4mm
+
 /** Maximum seed value. */
 var MAX_SEED = 999999;
 
@@ -413,9 +416,9 @@ function drawSVG(piece, element) {
  *  @param piece        The piece data.
  *  @param pdf          jsPDF document.
  *  @param scale        Scaling factor.
- *  @param offx, offy   Position of top-left corner.
+ *  @param offX, offY   Position of top-left corner.
  */
-function drawPDF(piece, pdf, scale, offx, offy) {
+function drawPDF(piece, pdf, scale, offX, offY) {
     // Line width. Use same for shims and bbox.
     pdf.setLineWidth(0.05*scale);
     
@@ -432,7 +435,7 @@ function drawPDF(piece, pdf, scale, offx, offy) {
             }
             pdf.lines(
                 lines,
-                shim[0].x*scale+offx, shim[0].y*scale+offy,
+                shim[0].x*scale+offX, shim[0].y*scale+offY,
                 [scale, scale],
                 'D'
             );
@@ -440,7 +443,7 @@ function drawPDF(piece, pdf, scale, offx, offy) {
         }
     }
     pdf.rect(
-        piece.bbox.x*scale+offx, piece.bbox.y*scale+offy, 
+        piece.bbox.x*scale+offX, piece.bbox.y*scale+offY, 
         (piece.bbox.x2-piece.bbox.x)*scale, (piece.bbox.y2-piece.bbox.y)*scale, 
         'D'
     );
@@ -461,8 +464,8 @@ function drawPDF(piece, pdf, scale, offx, offy) {
  *                          - justif    Justification ('left', 'center', 'right')
  *                          - cols      Minimum number of columns per page.
  *                          - rows      Minimum number of rows per page.
- *                          - seedPos   Seed number position ('none', 'header','footer').
- *                          - pagePos   Page number position ('none', 'header','footer').
+ *                          - compoPos  Composition number position ('none', 'header','footer').
+ *                          - pageNbPos Page number position ('none', 'header','footer').
  *                          - labelPos  Piece S/N label position ('none', 'top','bottom').
  *  @param limits           Output limits:
  *                          - maxPieces        Maximum overall number of pieces to print.
@@ -472,27 +475,43 @@ function drawPDF(piece, pdf, scale, offx, offy) {
  *  @param onfinish         Finish callback.
  */
 function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
-    // Various sizes.
-    // TODO settings
     var fontSizePt = 10; /* pt */
-    var margin = 15; /* mm */
-    var padding = 10; /* mm */
     
     // Create jsPDF object.
-    var pdf = new jsPDF(printOptions.orient, 'mm', printOptions.format);
+    var pdf = new jsPDF(printOptions.orient, printOptions.unit, printOptions.format);
+    var onePt = 1 / pdf.internal.scaleFactor;
     pdf.setFontSize(fontSizePt);
+    var fontSizeUnit = fontSizePt * onePt;
     
+    // Outer size of the page, i.e. full size minus margins.
+    var outerWidth = 
+          pdf.internal.pageSize.width 
+        - (printOptions.margins.left+printOptions.margins.right);   // Horizontal margins.
+    var outerHeight =
+          pdf.internal.pageSize.height
+        - (printOptions.margins.top+printOptions.margins.bottom);    // Vertical margins.
+        
+    // Inner size of the page, i.e. outer size minus header and footer.
+    var header = (printOptions.compoPos == 'top' || printOptions.pageNbPos == 'top');
+    var footer = (printOptions.compoPos == 'bottom' || printOptions.pageNbPos == 'bottom');
+    var innerWidth = outerWidth;
+    var innerHeight =
+          outerHeight
+        - (header ? fontSizeUnit+printOptions.padding : 0)          // Header.
+        - (footer ? fontSizeUnit+printOptions.padding : 0);         // Footer.
+        
     // Compute scaling and actual number of rows/cols.
-    var availWidth = pdf.internal.pageSize.width - margin*2 - padding*(printOptions.cols-1);
-    var availHeight = pdf.internal.pageSize.height - margin*2 - padding*(printOptions.rows-1);
-    var w = availWidth / printOptions.cols;
-    var h = availHeight / printOptions.rows;
-    var scale = Math.min(w/maxWidth, h/maxHeight);
-    w = maxWidth*scale;
-    h = maxHeight*scale;
-    printOptions.cols = Math.floor((pdf.internal.pageSize.width - margin*2 + padding) / (w + padding));
-    printOptions.rows = Math.floor((pdf.internal.pageSize.height - margin*2 + padding) / (h + padding));
+    var availWidth = innerWidth - printOptions.padding*(printOptions.cols-1);
+    var availHeight = innerHeight - printOptions.padding*(printOptions.rows-1);
+    var pieceWidth = availWidth / printOptions.cols;
+    var pieceHeight = availHeight / printOptions.rows - (printOptions.labelPos == 'none' ? 0 : fontSizeUnit);
+    var scale = Math.min(pieceWidth/maxWidth, pieceHeight/maxHeight);
+    pieceWidth = maxWidth*scale;
+    pieceHeight = maxHeight*scale + (printOptions.labelPos == 'none' ? 0 : fontSizeUnit);
+    printOptions.cols = Math.floor((innerWidth + printOptions.padding) / (pieceWidth + printOptions.padding));
+    printOptions.rows = Math.floor((innerHeight + printOptions.padding) / (pieceHeight + printOptions.padding));
     
+    // Max number of pieces per page.
     var nbPiecesPerPage = printOptions.cols*printOptions.rows;
     
     // Actual number of pieces.
@@ -507,8 +526,112 @@ function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
     // Actual number of docs.
     var nbDocs = Math.ceil(nbPages/nbPagesPerDoc);
     
-    // Draw each piece.
+    // Variables for output.
     var col = 0, row = 0, nb = 0, page = 1, firstPage = 1, doc = 1;
+    
+    // Function for header/footer output.
+    var compo = x+"-"+y+"-"+seed;
+    var compoWidth = pdf.getStringUnitWidth(compo) * fontSizeUnit;
+    var headerFooter = function() {
+        // DEBUG
+        // pdf.rect(
+            // printOptions.margins.left, printOptions.margins.top,
+            // outerWidth, outerHeight,
+            // 'D'
+        // );
+        // pdf.rect(
+            // printOptions.margins.left, printOptions.margins.top + (header ? fontSizeUnit + printOptions.padding : 0),
+            // innerWidth, innerHeight,
+            // 'D'
+        // );
+        
+        var compoX, compoY, compoJustif;
+        var pageNbX, pageNbY, pageNbJustif;
+        var pagNbWidth = pdf.getStringUnitWidth(page.toString()) * fontSizeUnit;
+        
+        // Horizontal positions.
+        if (printOptions.pageNbPos == printOptions.compoPos && printOptions.compoPos != 'none') {   
+            // Composition and page number side-by-side.
+            switch (printOptions.justif) {
+                case 'center':
+                    // Page number on right/outside.
+                    if (printOptions.sides == 'double' && (page % 2) == 0) {
+                        compoJustif = 'right';
+                        pageNbJustif = 'left';
+                    } else {
+                        compoJustif = 'left';
+                        pageNbJustif = 'right';
+                    }
+                    break;
+                
+                case 'left': 
+                    // Composition on left.
+                    compoJustif = 'left';
+                    pageNbJustif = 'right';
+                    break;
+                    
+                case 'right': 
+                    // Composition on right.
+                    compoJustif = 'right';
+                    pageNbJustif = 'left';
+                    break;
+            }
+        } else {
+            compoJustif = pageNbJustif = printOptions.justif;
+        }
+        switch (compoJustif) {
+            case 'center':
+                compoX = printOptions.margins.left + (innerWidth - compoWidth)/2;
+                break;
+                
+            case 'left':
+                compoX = printOptions.margins.left;
+                break;
+                
+            case 'right':
+                compoX = printOptions.margins.left + (innerWidth - compoWidth);
+                break;
+        }
+        switch (pageNbJustif) {
+            case 'center':
+                pageNbX = printOptions.margins.left + (innerWidth - pagNbWidth)/2;
+                break;
+                
+            case 'left':
+                pageNbX = printOptions.margins.left;
+                break;
+                
+            case 'right':
+                pageNbX = printOptions.margins.left + (innerWidth - pagNbWidth);
+                break;
+        }
+        
+        // Output composition number.
+        switch (printOptions.compoPos) {
+            case 'top':
+                compoY = printOptions.margins.top + fontSizeUnit - onePt;
+                pdf.text(compoX, compoY, compo);
+                break;
+            case 'bottom':
+                compoY = pdf.internal.pageSize.height - printOptions.margins.bottom;
+                pdf.text(compoX, compoY, compo);
+                break;
+        }
+        
+        // Output page number.
+        switch (printOptions.pageNbPos) {
+            case 'top':
+                pageNbY = printOptions.margins.top + fontSizeUnit - onePt;
+                pdf.text(pageNbX, pageNbY, page.toString());
+                break;
+            case 'bottom':
+                pageNbY = pdf.internal.pageSize.height - printOptions.margins.bottom;
+                pdf.text(pageNbX, pageNbY, page.toString());
+                break;
+        }
+    };
+    
+    // Function for drawing a piece given its index.
     var draw = function(i) {
         // Next column.
         if (nb > 0 && ++col >= printOptions.cols) {
@@ -520,7 +643,7 @@ function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
                 if ((page % nbPagesPerDoc) == 0) {
                     // Next doc.
                     save();
-                    pdf = new jsPDF(printOptions.orient, 'mm', printOptions.format);
+                    pdf = new jsPDF(printOptions.orient, printOptions.unit, printOptions.format);
                     pdf.setFontSize(fontSizePt);
                     page++;
                     firstPage = page;
@@ -528,37 +651,74 @@ function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
                     pdf.addPage();
                     page++;
                 }
+                
+                // Invert justification on even pages in double-sided mode.
+                if (printOptions.sides == 'double') {
+                    switch (printOptions.justif) {
+                        case 'left': printOptions.justif = 'right'; break; 
+                        case 'right': printOptions.justif = 'left'; break; 
+                    }
+                }
+                headerFooter();
             }
         }
         
-        // Compute offset in gridded layout.
-        var offx = margin + (w + padding) * col;
-        var offy = margin + (h + padding) * row;
-        
-        // Output piece at the right place.
+        // Compute piece/
         var sn = generatePermutation(i, c, x, y)
         var piece = computePiece(sn, pieceOptions);
-        drawPDF(piece, pdf, scale, offx, offy);
+
+        var labelWidth = pdf.getStringUnitWidth(sn) * fontSizeUnit;
+
+        // Offset in gridded layout.
+        var offX = printOptions.margins.left + (pieceWidth + printOptions.padding) * col;
+        var offY = printOptions.margins.top + (header ? fontSizeUnit + printOptions.padding : 0) + (pieceHeight + printOptions.padding) * row;
+
+        // DEBUG
+        // pdf.rect(offX, offY, pieceWidth, pieceHeight, 'D');
         
-        // Output label.
-        switch (printOptions.labelPos) {
-            case 'top':
-                pdf.text(offx, offy - 1, sn);
-                // TODO alignment pdf.text(offx + pdf.getStringUnitWidth(sn) * fontSizePt / pdf.internal.scaleFactor, offy - 1, "toto");
+        // Justification.
+        var labelX = offX;
+        var shiftRight = innerWidth - (pieceWidth * printOptions.cols) - (printOptions.padding * (printOptions.cols - 1));
+        switch (printOptions.justif) {
+            case 'center':
+                offX += (pieceWidth - (piece.bbox.x2-piece.bbox.x)*scale + shiftRight)/2;
+                labelX += (pieceWidth - labelWidth + shiftRight)/2;
                 break;
-            case 'bottom':
-                pdf.text(offx, offy + h + fontSizePt / pdf.internal.scaleFactor, sn);
+                
+            case 'right':
+                offX += (pieceWidth - (piece.bbox.x2-piece.bbox.x)*scale + shiftRight);
+                labelX += (pieceWidth - labelWidth + shiftRight);
                 break;
         }
+        
+        switch (printOptions.labelPos) {
+            case 'top':
+                pdf.text(labelX, offY + fontSizeUnit - onePt*2, sn);
+                offY += fontSizeUnit;
+                break;
+            case 'bottom':
+                pdf.text(labelX, offY + pieceHeight, sn);
+                break;
+        }
+        drawPDF(piece, pdf, scale, offX, offY);
         nb++;
     }
+    
+    // Function for periodic saving.
     var save = function() {
         // Save current PDF document.
-        saveAs(new Blob([pdf.output()], {type: 'application/pdf'}), x+"-"+y+"-"+seed+"."+firstPage+"-"+page+".pdf");
+        saveAs(new Blob([pdf.output()], {type: 'application/pdf'}), compo+"."+firstPage+"-"+page+".pdf");
         onprogress(nb, nbPrint, page, nbPages, doc, nbDocs);
         doc++;
     }
     
+    
+    //
+    // Now output all pieces!
+    //
+    
+    // First page header.
+    headerFooter();
     if (defaultSelected) {
         // All pieces but toggled ones.
         var i = 0;
@@ -1084,9 +1244,11 @@ function progress(piece, nbPieces, page, nbPages, doc, nbDocs) {
 }
 
 /**
- * Output pieces to PDF.
+ * Output pieces to PDF. Always use pt units.
  */
 function downloadPDF() {
+    var units = $("#unit").val();
+    
     $("#printDialog").modal('hide');
     $("#progressDialog").modal('show');
     piecesToPDF(
@@ -1099,27 +1261,28 @@ function downloadPDF() {
             format: $("[name='format']:checked").val(),
             sides: $("[name='sides']:checked").val(),
 
+            // Always use pt units, so do conversions upfront.
+            unit: 'pt',
             margins: {
-                top: $("#marginTop").val(),
-                bottom: $("#marginBottom").val(),
-                left: $("#marginLeft").val(),
-                right: $("#marginRight").val(),
+                top:    Math.round(parseFloat($("#marginTop").val())    * unitPt[units]),
+                bottom: Math.round(parseFloat($("#marginBottom").val()) * unitPt[units]),
+                left:   Math.round(parseFloat($("#marginLeft").val())   * unitPt[units]),
+                right:  Math.round(parseFloat($("#marginRight").val())  * unitPt[units]),
             },
-            padding: $("#padding").val(),
-            unit: $("#unit").val(),
+            padding: Math.round(parseFloat($("#padding").val()) * unitPt[units]),
             
             justif: $("[name='justif']:checked").val(),
             cols: $("#printColumns").val(),
             rows: $("#printRows").val(),
             
-            seedPos: $("[name='seedPos']:checked").val(),
-            pagePos: $("[name='pagePos']:checked").val(),
+            compoPos: $("[name='compoPos']:checked").val(),
+            pageNbPos: $("[name='pageNbPos']:checked").val(),
             labelPos: $("[name='labelPos']:checked").val(),
         },
         {
-            maxPieces: $("#maxPieces").val(),
-            maxPiecesPerDoc: $("#maxPiecesPerDoc").val(),
-            maxPagesPerDoc: $("#maxPagesPerDoc").val(),
+            maxPieces: parseInt($("#maxPieces").val()),
+            maxPiecesPerDoc: parseInt($("#maxPiecesPerDoc").val()),
+            maxPagesPerDoc: parseInt($("#maxPagesPerDoc").val()),
         },
         progress,
         function() {$("#progressDialog").modal('hide');}
@@ -1138,8 +1301,8 @@ function downloadZip() {
             trapezoidal: $("#trapezoidal").prop('checked')
         },
         {
-            maxPieces: $("#maxZip").val(),
-            maxPiecesPerZip: $("#maxPiecesPerZip").val()
+            maxPieces: parseInt($("#maxZip").val()),
+            maxPiecesPerZip: parseInt($("#maxPiecesPerZip").val())
         },
         progress,
         function() {$("#progressDialog").modal('hide');}
