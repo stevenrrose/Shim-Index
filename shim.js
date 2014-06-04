@@ -672,24 +672,28 @@ function piecesToPDF(pieceOptions, printOptions, limits, onprogress, onfinish) {
         // Offset in gridded layout.
         var offX = printOptions.margins.left + (pieceWidth + printOptions.padding) * col;
         var offY = printOptions.margins.top + (header ? fontSizeUnit + printOptions.padding : 0) + (pieceHeight + printOptions.padding) * row;
-
-        // DEBUG
-        // pdf.rect(offX, offY, pieceWidth, pieceHeight, 'D');
         
         // Justification.
         var labelX = offX;
         var shiftRight = innerWidth - (pieceWidth * printOptions.cols) - (printOptions.padding * (printOptions.cols - 1));
-        switch (printOptions.justif) {
-            case 'center':
-                offX += (pieceWidth - (piece.bbox.x2-piece.bbox.x)*scale + shiftRight)/2;
-                labelX += (pieceWidth - labelWidth + shiftRight)/2;
-                break;
+
+        // DEBUG
+        // switch (printOptions.justif) {
+            // case 'left':   pdf.rect(offX, offY, pieceWidth, pieceHeight, 'D'); break;
+            // case 'center': pdf.rect(offX+shiftRight/2, offY, pieceWidth, pieceHeight, 'D'); break;
+            // case 'right':  pdf.rect(offX+shiftRight, offY, pieceWidth, pieceHeight, 'D'); break;
+        // }
+        // switch (printOptions.justif) {
+            // case 'center':
+                // offX += (pieceWidth - (piece.bbox.x2-piece.bbox.x)*scale + shiftRight)/2;
+                // labelX += (pieceWidth - labelWidth + shiftRight)/2;
+                // break;
                 
-            case 'right':
-                offX += (pieceWidth - (piece.bbox.x2-piece.bbox.x)*scale + shiftRight);
-                labelX += (pieceWidth - labelWidth + shiftRight);
-                break;
-        }
+            // case 'right':
+                // offX += (pieceWidth - (piece.bbox.x2-piece.bbox.x)*scale + shiftRight);
+                // labelX += (pieceWidth - labelWidth + shiftRight);
+                // break;
+        // }
         
         switch (printOptions.labelPos) {
             case 'top':
