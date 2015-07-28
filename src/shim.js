@@ -1105,16 +1105,16 @@ function displayPieces(page) {
         var selected = defaultSelected;
         if (pieceToggle[i]) selected = !selected;
         
-        var piece = "<div id='piece-" + i + "' class='form-inline piece " + colClass + "'>";
+        var piece = "<div id='piece-" + i + "' class='form-inline piece " + (selected?"selected ":"") + colClass + "'>";
+        piece += "<div class='input-group'>";
+        piece += "<label class='input-group-addon'><input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/></label>";
+        piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, c, x, y) + "' size='" + y + "'/>";
+        piece += "<span class='input-group-addon input-group-btn'><button type='button' class='btn btn-primary' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'>SVG <span class='glyphicon glyphicon-arrow-down'></span></button></span>"
+        piece += "</div>";
         piece += "<div class='thumbnail'>";
-        piece += "<input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/> ";
         piece += "<label for='piece-select-" + i + "'>";
         piece += "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg><br/>";
         piece += "</label>";
-        piece += "<div class='input-group input-group-sm'>";
-        piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, c, x, y) + "' size='" + y + "'/>";
-        piece += "<span class='input-group-btn'><button type='button' class='btn btn-default' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'><span class='glyphicon glyphicon-download'></span> SVG</button></span>"
-        piece += "</div>";
         piece += "</div>";
         piece += "</div>";
         $pieces.append(piece);
@@ -1173,6 +1173,7 @@ function togglePiece(piece) {
         pieceToggle[piece] = true;
         nbToggle++;
     }
+	$("#piece-"+piece).toggleClass("selected");
     updateSelected();
     
 }
