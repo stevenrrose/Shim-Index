@@ -1,0 +1,151 @@
+/*
+ *
+ * Bootstrap theming.
+ *
+ */
+ 
+/* 
+ * Main title. 
+ */
+.page-header {
+  border-bottom: 4px solid black;
+  margin-left: 12px;
+  margin-right: 12px;
+  padding: 0;
+}
+
+
+/* 
+ * Control panel. 
+ */
+ 
+/* Outline. */
+.panel {
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 4px solid transparent;
+  border-radius: initial;
+  -webkit-box-shadow: initial;
+  box-shadow: initial;
+  padding: 4px;
+}
+.panel-default {
+  border-color: black;
+}
+
+/* Body. */
+.panel-body {
+	padding: 4px;
+}
+
+/* Rows. */
+.row {
+	margin: 0 -4px;
+}
+
+/* Horizontal separators. */
+hr {
+	border-top: 4px solid black;
+	margin: 8px 0;
+}
+
+/* Half-width columns (e.g. #zip and #print). */
+@media (min-width: 768px) {
+	.col-sm-3.col-half {
+		width: 12.5%;
+	}
+}
+
+
+/*
+ * Forms.
+ */
+
+/* Groups: container, label, help block. */
+.form-group {
+	padding: 4px;
+	margin: 0;
+}
+.control-label {
+	padding-left: 16px;
+}
+.help-block {
+	margin: 4px;
+	color: black;
+	padding-left: 12px;
+	font-size: smaller;
+}
+
+/* Generic controls. */
+.form-control {
+	color: black;
+	background-color: white;
+	border: 4px solid black;
+	border-radius: initial;
+	-webkit-box-shadow: initial;
+	box-shadow: initial;
+	padding: 0px;
+	padding-left: 12px;
+	height: 40px;
+}
+.form-control[disabled] {
+  color: white;
+  background-color: black;
+}
+
+/* Add-ons (e.g. #max and #random checkboxes). */
+.input-group-addon {
+  color: black;
+  background-color: white;
+  border: 4px solid black;
+  border-radius: initial;
+}
+
+/* Buttons. */
+.btn {
+	outline: none!important;
+	border: 4px solid transparent;  
+	border-radius: 0!important;
+	background-color: white;
+	box-shadow: none!important;
+	padding-left: 0;
+}
+.btn-default {
+	border-color: black;
+	color: black;
+}
+.btn-default[disabled] {
+	border-color: black;
+	background-color: white;
+	color: black;
+	opacity: 0.25;
+}
+.btn-default:hover, .btn-default:active, .btn-default:focus  {
+	background-color: black;
+	border-color: black;
+	color: white;
+}
+.btn-primary {
+	border-radius: 100px!important;
+	border-color: blue;
+	color: blue;
+}
+.btn-primary:hover, .btn-primary:active, .btn-primary:focus  {
+	background-color: blue;
+	border-color: blue;
+	color: white;
+}
+
+/*
+.btn-group .btn {
+  margin: 2px!important;
+}
+
+.input-group .form-control {
+  border-radius: 0;
+}
+
+.thumbnail {
+  border: 4px solid black;
+  border-radius: 0;
+}*/

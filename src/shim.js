@@ -1038,45 +1038,60 @@ function displayPieces(page) {
     var $pager = $("#pager");
     $pager.empty();
     if (nbPages > 1) {
-        var pager = "<ul class='pagination pagination-sm'>";
-        pager += "<li" + (page==0?" class='disabled'":"") + "><a href='javascript:displayPieces(" + Math.max(0,page-1) + ")'>&laquo;</a></li>";
+		// Standard pager.
+		$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + Math.max(0,page-1) + ")'><span class='glyphicon glyphicon-arrow-left'></span><span class='sr-only'> Prev</span></button>")
+			.prop('disabled', page==0)
+			.appendTo($pager);
         for (var i = 0; i < nbPages; i++) {
             if (nbPages > 10) {
                 // Limit buttons to 10, add ellipses for missing buttons.
                 if (page < 5) {
                     if (i == 8) {
                         // Ellipsis at end.
-                        pager += "<li class='disabled'><span>...</span></li>";
+                        $("<button type='button' class='btn btn-default form-control' disabled>...</button>")
+							.appendTo($pager);
                         i = nbPages-2;
                         continue;
                     }
                 } else if (page >= nbPages-5) {
                     if (i == 1) {
                         // Ellipsis at beginning.
-                        pager += "<li class='disabled'><span>...</span></li>";
+                        $("<button type='button' class='btn btn-default form-control' disabled>...</button>")
+							.appendTo($pager);
                         i = nbPages-9;
                         continue;
                     }
                 } else {
                     if (i == 1) {
                         // Ellipsis at beginning.
-                        pager += "<li class='disabled'><span>...</span></li>";
+                        $("<button type='button' class='btn btn-default form-control' disabled>...</button>")
+							.appendTo($pager);
                         i = page-3;
                         continue;
                     } else if (i == page+3) {
                         // Ellipsis at end.
-                        pager += "<li class='disabled'><span>...</span></li>";
+                        $("<button type='button' class='btn btn-default form-control' disabled>...</button>")
+							.appendTo($pager);
                         i = nbPages-2;
                         continue;
                     }
                 }
             }
-            pager += "<li" + (i==page?" class='active'":"") + "><a href='javascript:displayPieces(" + i + ")'>" + (i+1) + "</a></li>";
+			$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + i + ")'>" + (i+1) + "</button>")
+				.toggleClass('active', page==i)
+				.appendTo($pager);
         }
-        pager += "<li" + (page==nbPages-1?" class='disabled'":"") + "><a href='javascript:displayPieces(" + Math.min(page+1,nbPages-1) + ")'>&raquo;</a></li>";
-        pager += "</ul>";
-        $pager.append(pager);
-    }    
+		$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + Math.min(page+1,nbPages-1) + ")'><span class='glyphicon glyphicon-arrow-right'></span><span class='sr-only'> Next</span></button>")
+			.prop('disabled', page==nbPages-1)
+			.appendTo($pager);
+		$pager.find("button").wrap("<div class='form-group col-sm-1'></div>");
+		
+		// Small pager for XS devices.
+		$("#prevPage").prop('disabled', page==0).attr('onclick', "displayPieces(" + Math.max(0,page-1) + ")");
+		$("#nextPage").prop('disabled', page==nbPages-1).attr('onclick', "displayPieces(" + Math.min(page+1,nbPages-1) + ")");
+		$("#currentPage").html(page+1);
+		$("#totalPages").html(nbPages);
+    }
     
     // Clear existing pieces.
     var $pieces = $("#pieces");
@@ -1130,8 +1145,8 @@ function updatePiece(element) {
     
     // Generate piece.
     var piece = computePiece(sn, {
-        cropped: $("#cropped").prop('checked'), 
-        trapezoidal:$("#trapezoidal").prop('checked')
+        cropped: $("#cropped").prop('selected'), 
+        trapezoidal:$("#trapezoidal").prop('selected')
     });
     
     // Output to SVG.
@@ -1193,8 +1208,8 @@ function checkAll(check) {
  */
 function updateSelected() {
     nbSelected = (defaultSelected ? nbPieces - nbToggle : nbToggle);
-    $("#totalPieces").html(nbPieces);
-    $("#selectedPieces").html(nbSelected);
+    $("#totalPieces").html(nbPieces + " " + (nbPieces > 1 ? "SHIMS" : "SHIM") + " TOTAL");
+    $("#selectedPieces").html(nbSelected + " " + (nbSelected > 1 ? "SHIMS" : "SHIM") + " SELECTED");
     $("#zip").prop('disabled', (nbSelected == 0));
     $("#print").prop('disabled', (nbSelected == 0));
 }
@@ -1207,8 +1222,8 @@ function updateSelected() {
 function downloadSVG(sn) {
     // Generate piece.
     var piece = computePiece(sn, {
-        cropped: $("#cropped").prop('checked'), 
-        trapezoidal:$("#trapezoidal").prop('checked')
+        cropped: $("#cropped").prop('selected'), 
+        trapezoidal:$("#trapezoidal").prop('selected')
     });
     
     // Output to SVG.
@@ -1257,8 +1272,8 @@ function downloadPDF() {
     $("#progressDialog").modal('show');
     piecesToPDF(
         {
-            cropped: $("#cropped").prop('checked'),
-            trapezoidal: $("#trapezoidal").prop('checked')
+            cropped: $("#cropped").prop('selected'),
+            trapezoidal: $("#trapezoidal").prop('selected')
         },
         {
             orient: $("[name='orient']:checked").val(), 
@@ -1301,8 +1316,8 @@ function downloadZip() {
     $("#progressDialog").modal('show');
     piecesToZip(
         {
-            cropped: $("#cropped").prop('checked'),
-            trapezoidal: $("#trapezoidal").prop('checked')
+            cropped: $("#cropped").prop('selected'),
+            trapezoidal: $("#trapezoidal").prop('selected')
         },
         {
             maxPieces: parseInt($("#maxZip").val()),
