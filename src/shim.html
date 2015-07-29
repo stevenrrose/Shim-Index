@@ -63,7 +63,7 @@
 							<label for="nbPieces" class="control-label">Pieces</label>
 							<div class="input-group">
 								<input type="number" class="form-control" id="nbPieces" value="1" min="1" max="1000" />
-								<label class="input-group-addon"><input type="checkbox" id="max" /> Max</label>
+								<label class="input-group-addon"><input type="checkbox" id="max" /><span> Max</span></label>
 							</div>
 							<p class="help-block">No. of Pieces to Generate.</p>
 							<script>
@@ -78,7 +78,7 @@
 							<label for="seed" class="control-label">Seed</label>
 							<div class="input-group">
 								<input type="number" class="form-control" id="seed" value="0" min="0" max="999999" disabled />
-								<label class="input-group-addon"><input type="checkbox" id="random" checked /> Rdm.</label>
+								<label class="input-group-addon"><input type="checkbox" id="random" checked /><span>  Rdm.</span></label>
 							</div>
 							<p class="help-block">Seed for Piece Generator.</p>
 							<script>
@@ -122,15 +122,15 @@
 						<!-- Generate/print buttons -->
 						<div class="form-group col-sm-3">
 							<label class="control-label hidden-xs">&nbsp;</label>
-							<button type="button" id="generate" class="btn btn-primary form-control" onclick="generatePieces()">Generate <span class="glyphicon glyphicon-refresh"></span></button>
+							<button type="button" id="generate" class="btn btn-primary form-control" onclick="generatePieces()">Generate <span class="icon icon-generate"></span></button>
 						</div>
 						<div class="form-group col-sm-3 col-half">
 							<label class="control-label hidden-xs">&nbsp;</label>
-							<button type="button" id="zip" class="btn btn-default form-control" data-toggle="modal" data-target="#zipDialog" disabled autocomplete="off">Zip <span class="glyphicon glyphicon-arrow-down"></span></button>
+							<button type="button" id="zip" class="btn btn-default form-control" data-toggle="modal" data-target="#zipDialog" disabled autocomplete="off">Zip <span class="icon icon-arrow-down"></span></button>
 						</div>
 						<div class="form-group col-sm-3 col-half">
 							<label class="control-label hidden-xs">&nbsp;</label>
-							<button type="button" id="print" class="btn btn-default form-control" data-toggle="modal" data-target="#printDialog" disabled autocomplete="off">Print <span class="glyphicon glyphicon-arrow-up"></span></button>
+							<button type="button" id="print" class="btn btn-default form-control" data-toggle="modal" data-target="#printDialog" disabled autocomplete="off">Print <span class="icon icon-arrow-up"></span></button>
 						</div>
 					</div>
 				</div>
@@ -142,16 +142,16 @@
 			<div class="row">
 				<!-- Selection -->
 				<div class="form-group col-sm-3">
-					<button type="button" class="btn btn-default form-control" onclick="checkVisible(true)"><span class="glyphicon glyphicon-ok-sign"></span> Check visible</button>
+					<button type="button" class="btn btn-default form-control" onclick="checkVisible(true)"><span class="icon icon-checkbox-on"></span> Check visible</button>
 				</div>
 				<div class="form-group col-sm-3">
-					<button type="button" class="btn btn-default form-control" onclick="checkVisible(false)"><span class="glyphicon glyphicon-remove-sign"></span> Clear visible</button>
+					<button type="button" class="btn btn-default form-control" onclick="checkVisible(false)"><span class="icon icon-checkbox-off"></span> Clear visible</button>
 				</div>
 				<div class="form-group col-sm-3">
-					<button type="button" class="btn btn-default form-control" onclick="checkAll(true)"><span class="glyphicon glyphicon-ok-circle"></span> Check all</button>
+					<button type="button" class="btn btn-default form-control" onclick="checkAll(true)"><span class="icon icon-checkbox-on"></span> Check all</button>
 				</div>
 				<div class="form-group col-sm-3">
-					<button type="button" class="btn btn-default form-control" onclick="checkAll(false)"><span class="glyphicon glyphicon-remove-circle"></span> Clear all</button>
+					<button type="button" class="btn btn-default form-control" onclick="checkAll(false)"><span class="icon icon-checkbox-off"></span> Clear all</button>
 				</div>
 
 				<!-- Counters -->
@@ -182,10 +182,10 @@
 						<p id="page" class="control-label">PAGE <span id="currentPage"></span> / <span id="totalPages"></span></p>
 					</div>
 					<div class="form-group col-xs-3">
-						<button id="prevPage" type="button" class="btn btn-default form-control"><span class="glyphicon glyphicon-arrow-left"></span> Prev</button>
+						<button id="prevPage" type="button" class="btn btn-default form-control"><span class="icon icon-arrow-left"></span> Prev</button>
 					</div>
 					<div class="form-group col-xs-3">
-						<button id="nextPage" type="button" class="btn btn-default form-control">Next <span class="glyphicon glyphicon-arrow-right"></span></button>
+						<button id="nextPage" type="button" class="btn btn-default form-control">Next <span class="icon icon-arrow-right"></span></button>
 					</div>
 				</div>
 			</div>
@@ -225,7 +225,7 @@
 
                 <!-- Buttons -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="downloadZip()">Download Zip <span class="glyphicon glyphicon-arrow-down"></span></button>
+                    <button type="button" class="btn btn-primary" onclick="downloadZip()">Download Zip <span class="icon icon-arrow-down"></span></button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -500,7 +500,7 @@
 
                 <!-- Buttons -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="downloadPDF()">Download PDFs <span class="glyphicon glyphicon-arrow-down"></span></button>
+                    <button type="button" class="btn btn-primary" onclick="downloadPDF()">Download PDFs <span class="icon icon-arrow-down"></span></button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>

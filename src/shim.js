@@ -926,7 +926,7 @@ function validatePermutationSize() {
         // Permutation too large.
         $("#generate").removeClass("btn-default").addClass("btn-danger").prop('disabled', true);
         $("#x, #y").parent().addClass("has-error bg-danger");
-        $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='glyphicon glyphicon-warning-sign'></span> Permutation size too large!</div>");
+        $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='icon icon-warning-sign'></span> Permutation size too large!</div>");
     } else {
         $("#generate").removeClass("btn-danger").addClass("btn-primary").prop('disabled', false);
         $("#x, #y").parent().removeClass("has-error bg-danger");
@@ -1039,7 +1039,7 @@ function displayPieces(page) {
     $pager.empty();
     if (nbPages > 1) {
 		// Standard pager.
-		$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + Math.max(0,page-1) + ")'><span class='glyphicon glyphicon-arrow-left'></span><span class='sr-only'> Prev</span></button>")
+		$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + Math.max(0,page-1) + ")'><span class='icon icon-arrow-left'></span><span class='sr-only'> Prev</span></button>")
 			.prop('disabled', page==0)
 			.appendTo($pager);
         for (var i = 0; i < nbPages; i++) {
@@ -1081,7 +1081,7 @@ function displayPieces(page) {
 				.toggleClass('active', page==i)
 				.appendTo($pager);
         }
-		$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + Math.min(page+1,nbPages-1) + ")'><span class='glyphicon glyphicon-arrow-right'></span><span class='sr-only'> Next</span></button>")
+		$("<button type='button' class='btn btn-default form-control' onclick='displayPieces(" + Math.min(page+1,nbPages-1) + ")'><span class='icon icon-arrow-right'></span><span class='sr-only'> Next</span></button>")
 			.prop('disabled', page==nbPages-1)
 			.appendTo($pager);
 		$pager.find("button").wrap("<div class='form-group col-sm-1'></div>");
@@ -1107,9 +1107,9 @@ function displayPieces(page) {
         
         var piece = "<div id='piece-" + i + "' class='form-inline piece " + (selected?"selected ":"") + colClass + "'>";
         piece += "<div class='input-group'>";
-        piece += "<label class='input-group-addon'><input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/></label>";
+        piece += "<label class='input-group-addon'><input id='piece-select-" + i + "' class='piece-select' data-piece='" + i + "' type='checkbox' onclick='togglePiece(" + i + ")' " + (selected?" checked":"") + "/><span></span></label>";
         piece += "<input type='text' class='form-control sn' readonly placeholder='Piece S/N' value='" + generatePermutation(i, c, x, y) + "' size='" + y + "'/>";
-        piece += "<span class='input-group-addon input-group-btn'><button type='button' class='btn btn-primary' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'>SVG <span class='glyphicon glyphicon-arrow-down'></span></button></span>"
+        piece += "<span class='input-group-addon input-group-btn'><button type='button' class='btn btn-primary' onclick='downloadSVG($(this).parent().parent().find(\".sn\").val().trim())'>SVG <span class='icon icon-arrow-down'></span></button></span>"
         piece += "</div>";
         piece += "<div class='thumbnail'>";
         piece += "<label for='piece-select-" + i + "'>";
