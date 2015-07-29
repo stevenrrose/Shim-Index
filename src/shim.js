@@ -1113,7 +1113,7 @@ function displayPieces(page) {
         piece += "</div>";
         piece += "<div class='thumbnail'>";
         piece += "<label for='piece-select-" + i + "'>";
-        piece += "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg><br/>";
+        piece += "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg>";
         piece += "</label>";
         piece += "</div>";
         piece += "</div>";

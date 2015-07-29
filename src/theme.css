@@ -8,10 +8,11 @@
  * Main title. 
  */
 .page-header {
-  border-bottom: 4px solid black;
-  margin-left: 12px;
-  margin-right: 12px;
-  padding: 0;
+	border-bottom: 4px solid black;
+	margin-left: 12px;
+	margin-right: 12px;
+	padding: 0;
+	text-transform: uppercase;
 }
 
 
@@ -21,16 +22,16 @@
  
 /* Outline. */
 .panel {
-  margin-bottom: 20px;
-  background-color: #fff;
-  border: 4px solid transparent;
-  border-radius: initial;
-  -webkit-box-shadow: initial;
-  box-shadow: initial;
-  padding: 4px;
+	margin-bottom: 20px;
+	background-color: #fff;
+	border: 4px solid transparent;
+	border-radius: initial;
+	-webkit-box-shadow: initial;
+	box-shadow: initial;
+	padding: 4px;
 }
 .panel-default {
-  border-color: black;
+	border-color: black;
 }
 
 /* Body. */
@@ -89,16 +90,16 @@ hr {
 	height: 40px;
 }
 .form-control[disabled] {
-  color: white;
-  background-color: black;
+	color: white;
+	background-color: black;
 }
 
 /* Add-ons (e.g. #max and #random checkboxes). */
 .input-group-addon {
-  color: black;
-  background-color: white;
-  border: 4px solid black;
-  border-radius: initial;
+	color: black;
+	background-color: white;
+	border: 4px solid black;
+	border-radius: initial;
 }
 
 /* Buttons. */
@@ -137,21 +138,90 @@ hr {
 	color: white;
 }
 
+.btn-default.active {
+	background-color: blue;
+	border-color: black;
+	color: white;
+}
+
 /* Buttons in input groups. */
 .input-group-addon.input-group-btn {
 	padding: 0;
 }
-.input-group-addon.input-group-btn .btn {
+.input-group-addon.input-group-btn > .btn {
 	border: 0;
 	border-radius: 0;
 }
-.input-group-addon.input-group-btn .btn-primary {
+.input-group-addon.input-group-btn > .btn-primary {
 	border-radius: 0!important;
 }
 
-/* Thumbnails. */
+/* Buttons in button groups. */
+.btn-group>.btn:not(:last-child) {
+	border-right: 0;
+}
+
+/* Fieldsets. */
+legend {
+	margin: 0;
+	padding: 8px 4px 4px 4px;
+	border: none;
+    padding-left: 16px;
+}
+fieldset + hr {
+	margin: 4px;
+}
+
+
+/*
+ * Dialogs.
+ */
+
+.modal-content {
+	border-radius: 0;
+    border: 0;
+	padding: 4px;
+}
+.modal-header {
+	border-bottom: 4px solid black;
+    margin: 20px;
+	padding: 0;
+}
+.modal-title {
+	text-transform: uppercase;
+	padding-bottom: 8px;
+}
+.modal-body {
+	border: 4px solid black;
+	padding: 4px;
+	margin: 8px;
+}
+.modal-footer {
+	border-top: 4px solid black;
+    margin: 20px;
+	padding: 16px 0 0 0;
+}
+
+
+/* 
+ * Thumbnails. 
+ */
 .thumbnail {
 	margin: 0;
 	border: 4px solid black;
 	border-radius: 0;
+}
+
+
+/*
+ * Progress bar.
+ */
+
+.progress {
+	border: 4px solid black;
+    border-radius: 0;
+	height: 40px;
+}
+.progress.active .progress-bar {
+	background-color: blue;
 }
