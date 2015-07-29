@@ -189,6 +189,30 @@ input[type=checkbox]:checked + *:before {
 	content: "\e608";
 }
 
+/* Selects. */
+.styled-select select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	padding-right: 2em;
+}
+.styled-select {
+	position: relative;
+}
+.form-inline .styled-select {
+	display: inline-block;
+}
+.styled-select:after {
+	background: none;
+	pointer-events: none;
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-family: "icons";
+	content: "\e604";
+}
+
 
 /*
  * Dialogs.
@@ -299,4 +323,17 @@ input[type=checkbox]:checked + *:before {
 }
 .icon-checkbox-on:before {
 	content: "\e608";
+}
+
+
+
+
+/* TODO */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
 }
