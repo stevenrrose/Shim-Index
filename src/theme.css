@@ -256,7 +256,7 @@ input[type=number] {
 	top: 0;
 }
 .styled-input > .input-spinbox-down {
-	bottom: 0;
+	top: 20px;
 }
 .styled-input > .input-spinbox-up:before {
 	content: "\e605";
@@ -268,7 +268,11 @@ input[type=number] {
 	background: black;
 	color: white;
 }
-
+.input-group .styled-input {
+}
+.input-group .styled-input [type=number]:not(:disabled) {
+	z-index: 0;
+}
 
 /*
  * Dialogs.
