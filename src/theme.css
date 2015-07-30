@@ -232,7 +232,7 @@ input[type=number] {
 .styled-input {
 	position: relative;
 }
-.styled-input:before, .styled-input:after {
+.styled-input > .input-spinbox-up, .styled-input > .input-spinbox-down {
 	font-family: "icons";
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -240,16 +240,24 @@ input[type=number] {
 	padding: 0 4px;
 	margin: 0 4px;
 	right: 0;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-ms-user-select: none;
+	cursor: default;
 }
-.styled-input:before {
-	content: "\e605";
+.styled-input > .input-spinbox-up {
 	top: 0;
 }
-.styled-input:after {
-	content: "\e604";
+.styled-input > .input-spinbox-down {
 	bottom: 0;
 }
-
+.styled-input > .input-spinbox-up:before {
+	content: "\e605";
+}
+.styled-input > .input-spinbox-down:before {
+	content: "\e604";
+}
 
 
 /*

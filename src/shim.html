@@ -541,7 +541,9 @@
 		
 		// Styling.
 		$("select").wrap("<div class='styled-select'></div>");
-		$("input[type='number']").wrap("<div class='styled-input'></div>");
+		$("input[type='number']").wrap("<div class='styled-input'></div>").after("<span class='input-spinbox-up'></span><span class='input-spinbox-down'></span>");
+		$(".input-spinbox-up").click(function(e){$(this).parent().find("input")[0].stepUp();e.stopPropagation();});
+		$(".input-spinbox-down").click(function(e){$(this).parent().find("input")[0].stepDown();e.stopPropagation();});
     </script>
 </body>
 </html>
