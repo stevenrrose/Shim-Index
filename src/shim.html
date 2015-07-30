@@ -97,25 +97,25 @@
 						<!-- Layout -->
 						<div class="form-group col-sm-3" id="display1">
 							<label class="control-label">Display I</label>
-							<div class="styled-select"><select id="columns" class="form-control">
+							<select id="columns" class="form-control">
 								<option value="0" selected>Auto</option>
 								<option value="1">1</option>
 								<option value="2">2</option>
 								<option value="3">3</option>
 								<option value="4">4</option>
 								<option value="6">6</option>
-							</select></div>
+							</select>
 							<p class="help-block hidden-xs">Columns / Rows per Page.</p>
 						</div>
 						<div class="form-group col-sm-3" id="display2">
 							<label class="control-label">Display II</label>
-							<div class="styled-select"><select id="rows" class="form-control">
+							<select id="rows" class="form-control">
 								<option value="1">1</option>
 								<option value="2">2</option>
 								<option value="3" selected>3</option>
 								<option value="4">4</option>
 								<option value="5">5</option>
-							</select></div>
+							</select>
 							<p class="help-block visible-xs">Columns / Rows per Page.</p>
 						</div>
 
@@ -161,16 +161,16 @@
 
 				<!-- Options -->
 				<div class="form-group col-sm-3">
-					<div class="styled-select"><select class="form-control" onchange="updatePieces()">
+					<select class="form-control" onchange="updatePieces()">
 						<option value="" selected>Uncropped</option>
 						<option id="cropped" value="cropped">Cropped</option>
-					</select></div>
+					</select>
 				</div>
 				<div class="form-group col-sm-3">
-					<div class="styled-select"><select class="form-control" onchange="updatePieces()">
+					<select class="form-control" onchange="updatePieces()">
 						<option value="" selected>3-Sided</option>
 						<option id="trapezoidal" value="trapezoidal">4-Sided</option>
-					</select></div>
+					</select>
 				</div>
 			</div>
 
@@ -340,12 +340,12 @@
 
                             <!-- Units -->
                             <div class="form-group col-sm-4 col-md-2">
-                                <div class="styled-select"><select id="unit" class="form-control">
+                                <select id="unit" class="form-control">
                                     <option value="mm" selected>mm</option>
                                     <option value="cm">cm</option>
                                     <option value="in">in</option>
                                     <option value="pt">pt</option>
-                                </select></div>
+                                </select>
                                 <p class="help-block">Units</p>
                             </div>
                             <script>
@@ -390,21 +390,21 @@
                             <!-- Piece layout on pages -->
                             <div class="form-group col-sm-4 col-md-6">
                                 <div class="form-inline">
-                                    <div class="styled-select"><select id="printColumns" class="form-control">
+                                    <select id="printColumns" class="form-control">
                                         <option value="1" selected>1</option>
                                         <option value="2">2</option>
                                         <option value="3">3</option>
                                         <option value="4">4</option>
                                         <option value="5">5</option>
-                                    </select></div>
+                                    </select>
                                     &times;
-                                    <div class="styled-select"><select id="printRows" class="form-control">
+                                    <select id="printRows" class="form-control">
                                         <option value="1" selected>1</option>
                                         <option value="2">2</option>
                                         <option value="3">3</option>
                                         <option value="4">4</option>
                                         <option value="5">5</option>
-                                    </select></div>
+                                    </select>
                                 </div>
                                 <p class="help-block">Minimum number of columns/rows per page</p>
                             </div>
@@ -538,6 +538,10 @@
     <script>
         // Add validation for number inputs.
         $("input[type='number']").change(validateNumber);
+		
+		// Styling.
+		$("select").wrap("<div class='styled-select'></div>");
+		$("input[type='number']").wrap("<div class='styled-input'></div>");
     </script>
 </body>
 </html>

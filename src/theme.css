@@ -179,6 +179,8 @@ input[type=checkbox] {
 }
 input[type=checkbox] + *:before {
 	font-family: 'icons';
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 	visibility: visible;
 	display: inline-block;
 }
@@ -206,12 +208,48 @@ input[type=checkbox]:checked + *:before {
 	background: none;
 	pointer-events: none;
 	position: absolute;
-	right: 8px;
+	padding: 0 4px;
+	margin: 0 4px;
+	right: 0;
 	top: 50%;
 	transform: translateY(-50%);
 	font-family: "icons";
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 	content: "\e604";
 }
+
+/* Number Inputs .*/
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.styled-input {
+	position: relative;
+}
+.styled-input:before, .styled-input:after {
+	font-family: "icons";
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	position: absolute;
+	padding: 0 4px;
+	margin: 0 4px;
+	right: 0;
+}
+.styled-input:before {
+	content: "\e605";
+	top: 0;
+}
+.styled-input:after {
+	content: "\e604";
+	bottom: 0;
+}
+
 
 
 /*
@@ -323,17 +361,4 @@ input[type=checkbox]:checked + *:before {
 }
 .icon-checkbox-on:before {
 	content: "\e608";
-}
-
-
-
-
-/* TODO */
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-    -webkit-appearance: none;
-}
-
-input[type=number] {
-    -moz-appearance: textfield;
 }
