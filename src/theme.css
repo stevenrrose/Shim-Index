@@ -177,6 +177,12 @@ fieldset + hr {
 input[type=checkbox] {
 	display: none;
 }
+input[type=checkbox] + * {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-ms-user-select: none;
+}
 input[type=checkbox] + *:before {
 	font-family: 'icons';
 	-webkit-font-smoothing: antialiased;
@@ -257,6 +263,10 @@ input[type=number] {
 }
 .styled-input > .input-spinbox-down:before {
 	content: "\e604";
+}
+.styled-input > .input-spinbox-up:hover, .styled-input > .input-spinbox-down:hover  {
+	background: black;
+	color: white;
 }
 
 
