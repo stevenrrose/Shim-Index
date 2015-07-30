@@ -113,23 +113,23 @@ hr {
 	padding-left: 8px;
 	padding-right: 8px;
 }
-.btn-default {
-	border-color: black;
-	color: black;
-}
-.btn-default[disabled] {
-	border-color: black;
+.btn[disabled], .btn.disabled {
 	background-color: white;
-	color: black;
 	opacity: 0.25;
+}
+.btn-default, .btn-default[disabled], .btn-default.disabled {
+	border-color: black;
+	color: black;
 }
 .btn-default:hover, .btn-default:active, .btn-default:focus  {
 	background-color: black;
 	border-color: black;
 	color: white;
 }
-.btn-primary {
+.btn-primary, .btn-round {
 	border-radius: 100px!important;
+}
+.btn-primary, .btn-primary[disabled], .btn-primary.disabled {
 	border-color: blue;
 	color: blue;
 }
@@ -160,6 +160,11 @@ hr {
 /* Buttons in button groups. */
 .btn-group>.btn:not(:last-child) {
 	border-right: 0;
+}
+
+/* Buttons as form controls. */
+.btn.form-control {
+	padding: 4px;
 }
 
 /* Fieldsets. */
@@ -217,12 +222,15 @@ input[type=checkbox]:checked + *:before {
 	padding: 0 4px;
 	margin: 0 4px;
 	right: 0;
-	top: 50%;
+	top: 20px;
 	transform: translateY(-50%);
 	font-family: "icons";
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	content: "\e604";
+}
+.input-group .styled-select select {
+	z-index: 0;
 }
 
 /* Number Inputs .*/
@@ -268,10 +276,29 @@ input[type=number] {
 	background: black;
 	color: white;
 }
-.input-group .styled-input {
-}
-.input-group .styled-input [type=number]:not(:disabled) {
+.input-group .styled-input input[type=number]:not(:disabled) {
 	z-index: 0;
+}
+
+/* Errors & messages. */
+.has-error * {
+	border-color: red!important;
+	color: red!important;
+}
+
+.alert {
+	border: 4px solid transparent;
+	border-radius: 0;
+	background: white;
+	margin: 8px 0;
+}
+.alert-success {
+	border-color: green;
+	color: green;
+}
+.alert-danger {
+	border-color: red;
+	color: red;
 }
 
 /*
@@ -326,6 +353,29 @@ input[type=number] {
 .progress.active .progress-bar {
 	background-color: blue;
 }
+
+
+/*
+ * Collapsible.
+ */
+
+.caret {
+	font-family: 'icons';
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	border: none;
+}
+.caret:before {
+	color: blue;
+	background: white;
+	padding: 4px;
+	left: -4px;
+	position: relative;
+	content: "\e603";
+}
+.dropup .caret:before {
+	content: "\e602";
+} 
 
 
 /*
