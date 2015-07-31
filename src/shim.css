@@ -3,6 +3,10 @@
     stroke: black; 
     stroke-width: 0.1;
 }
+#pieces {
+	margin-left: 8px;
+	margin-right: 8px;
+}
 .piece {
 	padding: 4px;
 	margin: 0;
