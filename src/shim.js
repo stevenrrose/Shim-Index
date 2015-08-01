@@ -926,7 +926,7 @@ function validatePermutationSize() {
         // Permutation too large.
         $("#generate").removeClass("btn-default").addClass("btn-danger").prop('disabled', true);
         $("#x, #y").parent().addClass("has-error bg-danger");
-        $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='icon icon-warning-sign'></span> Permutation size too large!</div>");
+        $("#message").addClass("panel-body").html("<div class='alert alert-danger'><span class='glyphicon glyphicon-warning-sign'></span> Permutation size too large!</div>");
     } else {
         $("#generate").removeClass("btn-danger").addClass("btn-primary").prop('disabled', false);
         $("#x, #y").parent().removeClass("has-error bg-danger");
@@ -1175,7 +1175,6 @@ function togglePiece(piece) {
     }
 	$("#piece-"+piece).toggleClass("selected");
     updateSelected();
-    
 }
 
 /**
