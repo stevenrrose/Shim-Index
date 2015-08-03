@@ -445,3 +445,9 @@ input[type=number] {
 .icon-checkbox-on:before {
 	content: "\e608";
 }
+.icon-checkbox-group-off:before {
+	content: "\e609";
+}
+.icon-checkbox-group-on:before {
+	content: "\e60a";
+}
