@@ -226,6 +226,7 @@ input[type=checkbox]:checked + *:before {
 }
 .styled-select {
 	position: relative;
+	min-height: 40px;
 }
 .form-inline .styled-select {
 	display: inline-block;
