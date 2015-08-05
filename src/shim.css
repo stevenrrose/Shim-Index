@@ -80,3 +80,29 @@ legend {
 		padding-left: 16px;
 	}
 }
+
+/* Spinning icon for infinite scroll. */
+#pieces-end {
+	text-align: center;
+	padding: 4px;
+}
+#pieces-end .icon {
+	font-size: 32px;
+}
+.rotate-ccw {
+    -webkit-animation: rotate-ccw 2s infinite linear;
+    -moz-animation: rotate-ccw 2s infinite linear;
+    animation: rotate-ccw 2s infinite linear;
+}
+@-webkit-keyframes rotate-ccw {
+    from {-webkit-transform: rotate(359deg);}
+	to {-webkit-transform: rotate(0deg);}
+}
+@-moz-keyframes rotate-ccw {
+    from {-moz-transform: rotate(359deg);}
+	to {-moz-transform: rotate(0deg);}
+}
+@keyframes rotate-ccw {
+    from {transform: rotate(359deg);}
+	to {transform: rotate(0deg);}
+}

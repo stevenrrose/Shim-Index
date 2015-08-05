@@ -94,6 +94,7 @@
 					<hr/>
 					<div class="row">
 						<!-- Layout -->
+						<!--
 						<div class="form-group col-sm-3" id="display1">
 							<label class="control-label">Display I</label>
 							<select id="columns" class="form-control">
@@ -117,6 +118,27 @@
 							</select>
 							<p class="help-block visible-xs">Columns / Rows per Page.</p>
 						</div>
+						-->
+						<input type="hidden" id="columns" value="3">
+						<input type="hidden" id="rows" value="5">
+				
+						<!-- Options -->
+						<div class="form-group col-sm-3">
+							<label class="control-label">Shim Option I</label>
+							<select class="form-control" onchange="updatePieces()">
+								<option value="" selected>Uncropped</option>
+								<option id="cropped" value="cropped">Cropped</option>
+							</select>
+							<p class="help-block hidden-xs">Cropping.</p>
+						</div>
+						<div class="form-group col-sm-3">
+							<label class="control-label">Shim Option II</label>
+							<select class="form-control" onchange="updatePieces()">
+								<option value="" selected>3-Sided</option>
+								<option id="trapezoidal" value="trapezoidal">4-Sided</option>
+							</select>
+							<p class="help-block hidden-xs">No. of Sides on Shim.</p>
+						</div>
 
 						<!-- Generate/print buttons -->
 						<div class="form-group col-sm-3">
@@ -139,43 +161,32 @@
 		<!-- Toolbar with check/uncheck/cropping buttons and pager -->
 		<div id="toolbar" class="panel hidden">
 			<div class="row">
+				<!-- Counters -->
+				<div class="form-group col-sm-6">
+					<p id="counter" class="control-label"><span id="selectedPieces"></span> | <span id="totalPieces"></span></p>
+				</div>
+
 				<!-- Selection -->
+				<!--
 				<div class="form-group col-sm-3">
 					<button type="button" class="btn btn-default form-control" onclick="checkVisible(true)"><span class="icon icon-checkbox-group-on"></span> Check visible</button>
 				</div>
 				<div class="form-group col-sm-3">
 					<button type="button" class="btn btn-default form-control" onclick="checkVisible(false)"><span class="icon icon-checkbox-group-off"></span> Clear visible</button>
 				</div>
+				-->
 				<div class="form-group col-sm-3">
 					<button type="button" class="btn btn-default form-control" onclick="checkAll(true)"><span class="icon icon-checkbox-group-on"></span> Check all</button>
 				</div>
 				<div class="form-group col-sm-3">
 					<button type="button" class="btn btn-default form-control" onclick="checkAll(false)"><span class="icon icon-checkbox-group-off"></span> Clear all</button>
 				</div>
-
-				<!-- Counters -->
-				<div class="form-group col-sm-6">
-					<p id="counter" class="control-label"><span id="selectedPieces"></span> / <span id="totalPieces"></span></p>
-				</div>
-
-				<!-- Options -->
-				<div class="form-group col-sm-3">
-					<select class="form-control" onchange="updatePieces()">
-						<option value="" selected>Uncropped</option>
-						<option id="cropped" value="cropped">Cropped</option>
-					</select>
-				</div>
-				<div class="form-group col-sm-3">
-					<select class="form-control" onchange="updatePieces()">
-						<option value="" selected>3-Sided</option>
-						<option id="trapezoidal" value="trapezoidal">4-Sided</option>
-					</select>
-				</div>
 			</div>
 
 			<!-- Pager -->
 			<div class="row">
 				<div id="pager" class="hidden-xs"></div>
+				<!--
 				<div id="pager-xs" class="visible-xs">
 					<div class="form-group col-xs-6">
 						<p id="page" class="control-label">PAGE <span id="currentPage"></span> / <span id="totalPages"></span></p>
@@ -187,6 +198,7 @@
 						<button id="nextPage" type="button" class="btn btn-default form-control">Next <span class="icon icon-arrow-right"></span></button>
 					</div>
 				</div>
+				-->
 			</div>
 		</div>
 	</div>
@@ -533,19 +545,5 @@
 
     <!-- Scratch pad for SVG output -->
     <div id="tmpSvg" class="hidden"><svg xmlns='http://www.w3.org/2000/svg' version='1.1'></svg></div>
-
-    <script>
-        // Add validation for number inputs.
-        $("input[type='number']").change(validateNumber);
-		
-		// Styling.
-		$("select").wrap("<div class='styled-select'></div>");
-		$("input[type='number']").wrap("<div class='styled-input'></div>").after("<span class='input-spinbox-up'></span><span class='input-spinbox-down'></span>");
-		$(".input-spinbox-up")  .click(function(e) {e.stopPropagation(); var i = $(this).parent().find("input"); i[0].stepUp(); i.change();});
-		$(".input-spinbox-down").click(function(e) {e.stopPropagation(); var i = $(this).parent().find("input"); i[0].stepDown(); i.change();});
-		
-		// Validate auto-filled field values.
-		validatePermutationSize();
-    </script>
 </body>
 </html>
