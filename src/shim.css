@@ -61,22 +61,32 @@ legend {
     padding-top: 8px;
 }
 
-/* Times sign separator between #columns/#rows. */
+/* Times sign separator between print layout columns/rows. */
+#layout1:after {
+	display: block;
+	content: "\2716";
+	text-align: center;
+}
 @media (min-width: 768px) {
-	#display1 {
+	#printLayout > * {
+		float: left;
+	}
+	#layout1 {
+		width: 50%;
 		padding-right: 16px;
 		position: relative;
 	}
-	#display1:after {
-		display: block;
+	#layout1:after {
 		position: absolute;
 		width: 2em;
 		right: -1em;
-		top: 40px;
-		content: "\2716";
-		text-align: center;
+		top: 50%;
+		-webkit-transform: translateY(-50%);
+		-moz-transform: translateY(-50%);
+		transform: translateY(-50%);
 	}
-	#display2 {
+	#layout2 {
+		width: 50%;
 		padding-left: 16px;
 	}
 }

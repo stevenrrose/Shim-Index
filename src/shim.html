@@ -89,9 +89,10 @@
 
 						<!-- Container for validation/error messages -->
 						<div id="message"></div>
-
 					</div>
+					
 					<hr/>
+					
 					<div class="row">
 						<!-- Layout -->
 						<!--
@@ -378,6 +379,29 @@
                         <fieldset>
                             <legend>Layout</legend>
 
+                            <!-- Piece layout on pages -->
+                            <div id="printLayout" class="form-group col-sm-4 col-md-6">
+								<div id="layout1">
+									<select id="printColumns" class="form-control">
+										<option value="1" selected>1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+									</select>
+								</div>
+								<div id="layout2">
+									<select id="printRows" class="form-control">
+										<option value="1" selected>1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+									</select>
+								</div>
+                                <p class="help-block">Minimum number of columns/rows per page</p>
+                            </div>
+
                             <!-- Justification -->
                             <div class="form-group col-sm-8 col-md-6">
                                 <ul class="list-inline">
@@ -396,28 +420,6 @@
                                         <p class="help-block">Justification</p>
                                     </li>
                                 </ul>
-                            </div>
-
-                            <!-- Piece layout on pages -->
-                            <div class="form-group col-sm-4 col-md-6">
-                                <div class="form-inline">
-                                    <select id="printColumns" class="form-control">
-                                        <option value="1" selected>1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                    </select>
-                                    &times;
-                                    <select id="printRows" class="form-control">
-                                        <option value="1" selected>1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                    </select>
-                                </div>
-                                <p class="help-block">Minimum number of columns/rows per page</p>
                             </div>
                         </fieldset>
 						
